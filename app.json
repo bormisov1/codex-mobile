@@ -1,0 +1,61 @@
+{
+  "expo": {
+    "name": "Codex Mobile",
+    "slug": "codex-mobile",
+    "scheme": "codexmobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "bundleIdentifier": "com.prototypebyai.codexmobile",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true,
+          "NSAllowsLocalNetworking": true
+        },
+        "NSMicrophoneUsageDescription": "Speech dictation for messages to your Codex server.",
+        "NSSpeechRecognitionUsageDescription": "Transcribe your speech into a message."
+      }
+    },
+    "android": {
+      "package": "com.prototypebyai.codexmobile",
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#14221d"
+      }
+    },
+    "plugins": [
+      "expo-document-picker",
+      "expo-speech-recognition",
+      "expo-sharing",
+      "expo-font",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ],
+      "expo-notifications",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#14221d"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {}
+    },
+    "icon": "./assets/icon.png"
+  }
+}

@@ -1,0 +1,58 @@
+name: Release Codex Mobile
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codex-mobile-release
+  cancel-in-progress: false
+
+jobs:
+  credentials:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Expo token before reserving build jobs
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: test -n "$EXPO_TOKEN"
+
+  ios:
+    needs: credentials
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      CI: '1'
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --include=dev
+      - run: npm run typecheck
+      - run: npx eas-cli@latest build --platform ios --profile production --non-interactive --wait
+      - run: npx eas-cli@latest submit --platform ios --profile production --latest --non-interactive --wait
+
+  android:
+    needs: credentials
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      CI: '1'
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --include=dev
+      - run: npm run typecheck
+      - run: npx eas-cli@latest build --platform android --profile production --non-interactive --wait
+      - run: npx eas-cli@latest submit --platform android --profile production --latest --non-interactive --wait

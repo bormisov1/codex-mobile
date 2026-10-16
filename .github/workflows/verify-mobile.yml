@@ -1,0 +1,68 @@
+name: Verify Codex Mobile
+
+on:
+  pull_request:
+    branches: [dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --include=dev
+      - run: npm run typecheck
+      - run: npm test
+
+  android:
+    needs: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      CI: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - run: npm ci --include=dev
+      - run: npx expo prebuild --platform android --no-install
+      - run: ./gradlew :app:assembleDebug --no-daemon
+        working-directory: android
+
+  ios:
+    needs: checks
+    runs-on: macos-26
+    timeout-minutes: 90
+    env:
+      CI: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --include=dev
+      - run: npx expo prebuild --platform ios --no-install
+      - run: pod install --project-directory=ios
+      - name: Compile unsigned iOS simulator app
+        run: |
+          workspace=$(find ios -maxdepth 1 -name '*.xcworkspace' -print -quit)
+          xcodebuild build \
+            -workspace "$workspace" \
+            -scheme CodexMobile \
+            -configuration Release \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO
