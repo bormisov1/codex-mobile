@@ -5,6 +5,9 @@
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
     "start": "expo start --dev-client",
+    "web": "expo start --web",
+    "build:web": "expo export --platform web",
+    "preview:web": "node scripts/serve-web-preview.mjs",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "typecheck": "tsc --noEmit",
@@ -12,6 +15,7 @@
     "doctor": "expo-doctor"
   },
   "dependencies": {
+    "@expo/metro-runtime": "~57.0.17",
     "@expo/vector-icons": "^15.0.2",
     "@preeternal/react-native-cookie-manager": "^7.0.0",
     "@react-native-async-storage/async-storage": "2.2.0",
@@ -29,10 +33,12 @@
     "expo-system-ui": "~57.0.4",
     "punycode": "^2.3.1",
     "react": "19.2.3",
+    "react-dom": "19.2.3",
     "react-native": "0.86.3",
     "react-native-markdown-display": "^7.0.2",
     "react-native-safe-area-context": "~5.7.0",
-    "react-native-sse": "^1.2.1"
+    "react-native-sse": "^1.2.1",
+    "react-native-web": "^0.21.2"
   },
   "devDependencies": {
     "@types/react": "~19.2.0",

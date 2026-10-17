@@ -22,6 +22,18 @@ npm run doctor
 npm run start
 ```
 
+### Local browser preview
+
+The browser preview renders the same React Native app with React Native Web and sends its API requests through a loopback proxy to the existing WebUI service. From this project folder, run:
+
+```sh
+npm ci --include=dev
+npm run build:web
+npm run preview:web
+```
+
+Open `http://127.0.0.1:8085` on the same PC and enter the existing Codex WebUI password. The server address is preset because browser cookies and the service's origin check require same-origin requests. The preview binds only to `127.0.0.1`; set `CODEX_BACKEND_ORIGIN` before starting the preview if the WebUI service is on another local origin, and set `PREVIEW_PORT` to change the browser port. Browser speech recognition and notifications depend on browser support and permissions; file sharing falls back to a download. Rebuild with `npm run build:web` after changing app code, then refresh the tab.
+
 `npm run ios` and `npm run android` generate the native projects and run locally. `npm run start` targets the development client. Build and store submission steps are in [BUILD_AND_RELEASE.md](BUILD_AND_RELEASE.md). Before store submission, replace the example iOS bundle ID and Android package ID in `app.json`, run `eas init` to set `extra.eas.projectId`, and set the real numeric `submit.production.ios.ascAppId` in `eas.json`. Keep signing keys, `EXPO_TOKEN`, the WebUI password, and AMT keys outside the repository.
 
 ## Interface and server behavior
