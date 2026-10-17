@@ -4,12 +4,6 @@ on:
   pull_request:
     branches: [dev]
   workflow_dispatch:
-    inputs:
-      signed_ios:
-        description: Build a signed iOS IPA on the macOS runner
-        type: boolean
-        required: false
-        default: false
 
 permissions:
   contents: read
@@ -61,39 +55,12 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci --include=dev
-      - run: npx expo prebuild --platform ios --no-install
       - run: pod install --project-directory=ios
       - name: Compile unsigned iOS simulator app
         run: |
-          workspace=$(find ios -maxdepth 1 -name '*.xcworkspace' -print -quit)
-          scheme=$(basename "$(find ios -path '*/xcshareddata/xcschemes/*.xcscheme' -print -quit)" .xcscheme)
           xcodebuild build \
-            -workspace "$workspace" \
-            -scheme "$scheme" \
+            -workspace ios/Modex.xcworkspace \
+            -scheme Modex \
             -configuration Release \
             -destination 'generic/platform=iOS Simulator' \
             CODE_SIGNING_ALLOWED=NO
-
-  signed_ios:
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.signed_ios }}
-    needs: checks
-    runs-on: macos-26
-    timeout-minutes: 180
-    env:
-      CI: '1'
-      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
-      - run: test -n "$EXPO_TOKEN"
-      - run: npm ci --include=dev
-      - run: npx eas-cli@latest build --platform ios --profile production --local --non-interactive --output modex.ipa
-      - uses: actions/upload-artifact@v4
-        with:
-          name: modex-ios-ipa
-          path: modex.ipa
-          if-no-files-found: error
-          retention-days: 7

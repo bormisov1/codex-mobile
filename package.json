@@ -49,5 +49,12 @@
   "overrides": {
     "markdown-it": "14.3.1",
     "linkify-it": "6.1.0"
+  },
+  "expo": {
+    "doctor": {
+      "appConfigFieldsNotSyncedCheck": {
+        "enabled": false
+      }
+    }
   }
 }
