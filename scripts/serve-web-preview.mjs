@@ -56,6 +56,6 @@ http.createServer((request, response) => {
     'Cache-Control': path.endsWith('index.html') ? 'no-store' : 'public, max-age=3600' });
   createReadStream(path).pipe(response);
 }).listen(port, bind, () => {
-  console.log(`Codex Mobile browser preview: http://${bind}:${port}`);
+  console.log(`Modex browser preview: http://${bind}:${port}`);
   console.log(`Codex WebUI backend: ${backend.origin}`);
 });

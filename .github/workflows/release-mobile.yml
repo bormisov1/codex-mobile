@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   credentials:
-    if: ${{ vars.MOBILE_RELEASE_READY == 'true' }}
+    if: ${{ vars.MOBILE_IOS_RELEASE_READY == 'true' || vars.MOBILE_ANDROID_RELEASE_READY == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Check Expo token before reserving build jobs
@@ -24,6 +24,7 @@ jobs:
 
   ios:
     needs: credentials
+    if: ${{ vars.MOBILE_IOS_RELEASE_READY == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 180
     env:
@@ -42,6 +43,7 @@ jobs:
 
   android:
     needs: credentials
+    if: ${{ vars.MOBILE_ANDROID_RELEASE_READY == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 180
     env:

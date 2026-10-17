@@ -1,15 +1,16 @@
 {
   "expo": {
-    "name": "Codex Mobile",
+    "name": "Modex",
     "slug": "codex-mobile",
-    "scheme": "codexmobile",
+    "scheme": "modex",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "bundleIdentifier": "com.prototypebyai.codexmobile",
+      "bundleIdentifier": "com.prototypebyai.modex",
       "supportsTablet": true,
       "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true,
           "NSAllowsLocalNetworking": true
@@ -54,8 +55,11 @@
       ]
     ],
     "extra": {
-      "eas": {}
+      "eas": {
+        "projectId": "4e0c530e-5a70-4baf-a4ac-e864ebfef37d"
+      }
     },
-    "icon": "./assets/icon.png"
+    "icon": "./assets/icon.png",
+    "owner": "bormisov"
   }
 }
