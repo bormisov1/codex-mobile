@@ -13,6 +13,8 @@ This project follows the same long-lived branch pattern as `chinese-learn`: work
 
 The release workflow uses EAS cloud builds, so GitHub runners do not need Apple signing files or Android keystores. EAS keeps signing and submission credentials in the connected Expo account; never commit them. iOS uploads to TestFlight and Android uploads to the Play internal track. Store review and tester access remain managed in the respective store consoles.
 
+When the EAS cloud build quota is exhausted, the **Verify Codex Mobile** workflow can be dispatched with `signed_ios=true` on the chosen branch. Its macOS runner uses EAS local build and the repository's `EXPO_TOKEN` secret to download the managed iOS signing credentials, then uploads a signed `modex-ios-ipa` artifact. Download that artifact and run `eas submit --platform ios --profile production --path modex.ipa` locally. This manual path uses GitHub macOS runner minutes and does not start an EAS cloud build.
+
 ## Daily flow
 
 ```sh
