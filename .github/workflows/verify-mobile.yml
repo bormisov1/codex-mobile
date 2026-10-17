@@ -60,9 +60,10 @@ jobs:
       - name: Compile unsigned iOS simulator app
         run: |
           workspace=$(find ios -maxdepth 1 -name '*.xcworkspace' -print -quit)
+          scheme=$(basename "$(find ios -path '*/xcshareddata/xcschemes/*.xcscheme' -print -quit)" .xcscheme)
           xcodebuild build \
             -workspace "$workspace" \
-            -scheme CodexMobile \
+            -scheme "$scheme" \
             -configuration Release \
             -destination 'generic/platform=iOS Simulator' \
             CODE_SIGNING_ALLOWED=NO
