@@ -52,6 +52,28 @@ export function eventThreadId(event:CodexEvent):string|undefined {
 }
 export function isDecisionRequest(method:string):boolean { return /requestApproval|applyPatchApproval|execCommandApproval/.test(method) }
 export function permissionLabel(mode:PermissionMode):string {return mode==='yolo'?'YOLO':mode[0].toUpperCase()+mode.slice(1)}
+export function usageDetails(value:unknown):{plan?:string;windows:{label:string;usedPercent:number;resetsAt?:number}[]} {
+ const data=value&&typeof value==='object'?value as Record<string,unknown>:{};
+ const limits=data.rateLimits&&typeof data.rateLimits==='object'?data.rateLimits as Record<string,unknown>:{};
+ const windows=['primary','secondary'].flatMap(key=>{
+  const window=limits[key];if(!window||typeof window!=='object')return [];
+  const item=window as Record<string,unknown>;
+  if(typeof item.usedPercent!=='number'||!Number.isFinite(item.usedPercent))return [];
+  const mins=typeof item.windowDurationMins==='number'?item.windowDurationMins:0;
+  const label=mins>0&&mins%1440===0?`${mins/1440}-day limit`:mins>0&&mins%60===0?`${mins/60}-hour limit`:mins>0?`${mins}-minute limit`:`${key==='primary'?'Primary':'Secondary'} limit`;
+  const raw=item.resetsAt;
+  const date=typeof raw==='number'?(raw<1e11?raw*1000:raw):typeof raw==='string'?Date.parse(raw):NaN;
+  return [{label,usedPercent:item.usedPercent,resetsAt:Number.isFinite(date)?date:undefined}];
+ });
+ return {plan:typeof data.planType==='string'&&data.planType?data.planType[0].toUpperCase()+data.planType.slice(1):undefined,windows};
+}
+export function chatTokenCount(value:unknown):number|undefined {
+ if(!value||typeof value!=='object')return undefined;
+ const data=value as Record<string,unknown>;
+ const total=data.totalTokenUsage&&typeof data.totalTokenUsage==='object'?data.totalTokenUsage as Record<string,unknown>:data.total&&typeof data.total==='object'?data.total as Record<string,unknown>:data;
+ const count=total.totalTokens;
+ return typeof count==='number'&&Number.isFinite(count)?count:undefined;
+}
 export function rateReset(value:unknown):number|undefined {
  const o=value as {rateLimits?:{primary?:{resetsAt?:number|string};secondary?:{resetsAt?:number|string}}};
  const vals=[o?.rateLimits?.primary?.resetsAt,o?.rateLimits?.secondary?.resetsAt].map(x=>typeof x==='string'?Date.parse(x):typeof x==='number'?(x<1e11?x*1000:x):NaN).filter(x=>Number.isFinite(x)&&x>Date.now());

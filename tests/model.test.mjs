@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {originOf, eventThreadId, messagesOf, isDecisionRequest, isRateLimitError, isLocalResource, planOf, rateReset, pathForThread} from '../src/model.ts';
+import {originOf, eventThreadId, messagesOf, isDecisionRequest, isRateLimitError, isLocalResource, planOf, rateReset, pathForThread, usageDetails, chatTokenCount} from '../src/model.ts';
 
 test('server origin accepts a pathless HTTP or HTTPS origin only',()=>{
  assert.equal(originOf('https://codex.example.com/'),'https://codex.example.com');
@@ -32,6 +32,12 @@ test('rate-limit reset is converted from seconds, and local links are recognized
  assert.equal(isRateLimitError('some other failure'),false);
  assert.equal(isLocalResource('/home/work/image.png'),true);
  assert.equal(isLocalResource('https://example.com/image.png'),false);
+});
+test('provider usage handles the reported Codex rate-limit shape',()=>{
+ const details=usageDetails({rateLimits:{limitId:'codex',primary:{usedPercent:17,windowDurationMins:300,resetsAt:1792265697},secondary:{usedPercent:24,windowDurationMins:10080,resetsAt:1792651636},credits:{hasCredits:false}},planType:'plus'});
+ assert.deepEqual(details,{plan:'Plus',windows:[{label:'5-hour limit',usedPercent:17,resetsAt:1792265697000},{label:'7-day limit',usedPercent:24,resetsAt:1792651636000}]});
+ assert.equal(chatTokenCount({totalTokenUsage:{totalTokens:12345}}),12345);
+ assert.equal(chatTokenCount({}),undefined);
 });
 test('a saved plan is reconstructed from last turn',()=>{
  const thread={id:'t',cwd:'/',turns:[{id:'a',status:'completed',items:[{type:'plan',plan:[{step:'Check',status:'completed'}]}]}]};
