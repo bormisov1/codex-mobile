@@ -102,16 +102,33 @@ jobs:
             -archivePath "$RUNNER_TEMP/Modex.xcarchive" \
             -exportPath "$RUNNER_TEMP/export" \
             -exportOptionsPlist "$RUNNER_TEMP/export-options.plist"
-      - name: Upload to TestFlight
+      - name: Install App Store Connect API key
         env:
           ASC_API_KEY_JSON_BASE64: ${{ secrets.ASC_API_KEY_JSON_BASE64 }}
         run: |
           printf '%s' "$ASC_API_KEY_JSON_BASE64" | base64 --decode -o "$RUNNER_TEMP/asc-api-key.json"
-          fastlane pilot upload \
-            --ipa "$RUNNER_TEMP/export/Modex.ipa" \
-            --api_key_path "$RUNNER_TEMP/asc-api-key.json" \
-            --skip_waiting_for_build_processing true \
-            --skip_submission true
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          data = json.loads((Path(os.environ["RUNNER_TEMP"]) / "asc-api-key.json").read_text())
+          key_id = data["key_id"]
+          issuer_id = data["issuer_id"]
+          key_path = Path.home() / ".appstoreconnect" / "private_keys" / f"AuthKey_{key_id}.p8"
+          key_path.parent.mkdir(parents=True, exist_ok=True)
+          key_path.write_text(data["key"])
+          key_path.chmod(0o600)
+          with open(os.environ["GITHUB_ENV"], "a") as output:
+              output.write(f"ASC_KEY_ID={key_id}\nASC_ISSUER_ID={issuer_id}\n")
+          PY
+      - name: Upload to TestFlight
+        run: |
+          xcrun altool --upload-app \
+            -f "$RUNNER_TEMP/export/Modex.ipa" \
+            -t ios \
+            --apiKey "$ASC_KEY_ID" \
+            --apiIssuer "$ASC_ISSUER_ID"
 
   android:
     if: ${{ vars.MOBILE_ANDROID_RELEASE_READY == 'true' }}
