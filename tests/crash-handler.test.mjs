@@ -5,15 +5,14 @@ import test from 'node:test';
 
 const source = readFileSync(new URL('../index.js', import.meta.url), 'utf8');
 
-test('a fatal JavaScript error is saved before the share alert appears', () => {
+test('native fatal listener saves the JavaScript stack and offers sharing before preventing the abort', () => {
   const calls = [];
-  let handler;
-  const global = { RN$handleException: () => false };
+  const global = { RN$registerExceptionListener: fn => { global.listener = fn; } };
   const modules = {
     './src/diagnostics': {
       recordDiagnostic: (error, kind) => {
-        calls.push(['record', kind, error.message]);
-        return { name: 'Error', message: error.message };
+        calls.push(['record', kind, error.message, error.stack]);
+        return { name: error.name, message: error.message };
       },
       formatDiagnostic: () => 'shareable stack',
     },
@@ -23,26 +22,26 @@ test('a fatal JavaScript error is saved before the share alert appears', () => {
     },
     'expo/AppEntry': {},
   };
-  runInNewContext(source, { __DEV__: false, navigator: { product: 'ReactNative' }, global, require: name => modules[name] });
-  handler = global.RN$handleException;
-  assert.equal(handler(new Error('boom'), true), true);
+  runInNewContext(source, { __DEV__: false, global, require: name => modules[name] });
+  global.listener({
+    name: 'TypeError', message: 'TypeError: boom', isFatal: true,
+    extraData: { rawStack: 'raw JS stack' },
+    preventDefault: () => calls.push(['preventDefault']),
+  });
   assert.deepEqual(calls, [
-    ['record', 'fatal JavaScript error', 'boom'],
+    ['record', 'fatal JavaScript error', 'boom', 'raw JS stack'],
     ['alert', ['Copy details', 'Share details', 'Close']],
+    ['preventDefault'],
   ]);
-  assert.equal(handler(new Error('again'), true), true);
-  assert.equal(calls.length, 2);
 });
 
-test('a nonfatal exception retains the React Native handler', () => {
+test('nonfatal native reports remain with React Native', () => {
   const calls = [];
-  const global = { RN$handleException: (...args) => { calls.push(args); return true; } };
+  const global = { RN$registerExceptionListener: fn => { global.listener = fn; } };
   runInNewContext(source, {
-    __DEV__: false,
-    navigator: { product: 'ReactNative' },
-    global,
-    require: name => name === './src/diagnostics' ? {} : name === 'expo/AppEntry' ? {} : assert.fail(name),
+    __DEV__: false, global,
+    require: name => name === './src/diagnostics' ? { recordDiagnostic: () => calls.push('record') } : name === 'expo/AppEntry' ? {} : assert.fail(name),
   });
-  assert.equal(global.RN$handleException('recoverable', false, true), true);
-  assert.deepEqual(calls, [['recoverable', false, true]]);
+  global.listener({ isFatal: false, preventDefault: () => calls.push('preventDefault') });
+  assert.deepEqual(calls, []);
 });
