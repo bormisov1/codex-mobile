@@ -2,10 +2,19 @@ import CookieManager from '@preeternal/react-native-cookie-manager';
 import EventSource from 'react-native-sse';
 import type { ActiveThread, Attachment, GalleryFile, ServerRequest, StreamFrame, Thread, Workspace } from './types';
 import { originOf, pathForThread } from './model';
+import { basicAuthorization } from './auth';
+import type { BasicCredentials } from './auth';
 export class ApiError extends Error { constructor(message:string,public status:number){super(message)} }
 export class CodexApi {
   readonly origin:string;
-  constructor(input:string){this.origin=originOf(input)}
+  private readonly authorization?:string;
+  constructor(input:string, credentials?:BasicCredentials){this.origin=originOf(input);this.authorization=basicAuthorization(this.origin,credentials)}
+  mediaHeaders(cookie=''):Record<string,string> {
+    const headers:Record<string,string>={};
+    if(this.authorization)headers.Authorization=this.authorization;
+    if(cookie)headers.Cookie=cookie;
+    return headers;
+  }
   async cookie():Promise<string> {
     const native=await CookieManager.get(this.origin).catch(()=>({}));
     const c=native as Record<string,{value:string}>;
@@ -13,16 +22,15 @@ export class CodexApi {
   }
   async request<T>(path:string,method='GET',body?:unknown):Promise<T> {
     const cookie=await this.cookie();
-    const headers:Record<string,string>={Accept:'application/json'};
+    const headers:Record<string,string>={Accept:'application/json',...this.mediaHeaders(cookie)};
     if(method!=='GET') {headers.Origin=this.origin;headers['Content-Type']='application/json'}
-    if(cookie) headers.Cookie=cookie;
     let response:Response;
     try {response=await fetch(this.origin+path,{method,headers,body:body===undefined?undefined:JSON.stringify(body),credentials:'include'});} catch(e){throw new ApiError(`Cannot reach ${this.origin}: ${String(e)}`,0)}
     if(path==='/api/login' && response.ok){
       const setCookie=response.headers.get('set-cookie');
       if(setCookie) await CookieManager.setFromResponse(this.origin,setCookie).catch(()=>{});
     }
-    let value:unknown; try{value=await response.json()}catch{value={error:`HTTP ${response.status}`}}
+    let value:unknown; try{value=await response.json()}catch{value={error:response.status===401&&response.headers.get('www-authenticate')?.toLowerCase().startsWith('basic')?'Proxy username or password rejected':`HTTP ${response.status}`}}
     if(!response.ok) throw new ApiError(String((value as {error?:string}).error||`HTTP ${response.status}`),response.status);
     return value as T;
   }
@@ -50,7 +58,7 @@ export class CodexApi {
   amtDisconnect(){return this.request('/api/amt/connect','DELETE',{})}
   async events(onFrame:(frame:StreamFrame)=>void,onState:(state:'connected'|'reconnecting'|'failed')=>void):Promise<()=>void>{
     const cookie=await this.cookie();
-    const source=new EventSource< 'message' >(this.origin+'/api/events',{headers:cookie?{Cookie:cookie}:undefined,withCredentials:true,pollingInterval:3000,timeout:30000});
+    const source=new EventSource< 'message' >(this.origin+'/api/events',{headers:this.mediaHeaders(cookie),withCredentials:true,pollingInterval:3000,timeout:30000});
     source.addEventListener('open',()=>onState('connected'));
     source.addEventListener('error',()=>onState('reconnecting'));
     source.addEventListener('message',e=>{try{if(e.data)onFrame(JSON.parse(e.data) as StreamFrame)}catch{}});
