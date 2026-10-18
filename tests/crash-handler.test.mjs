@@ -8,6 +8,7 @@ const source = readFileSync(new URL('../index.js', import.meta.url), 'utf8');
 test('native fatal listener saves the JavaScript stack and offers sharing before preventing the abort', () => {
   const calls = [];
   const global = { RN$registerExceptionListener: fn => { global.listener = fn; } };
+  Object.defineProperty(global, 'RN$handleException', { value: () => true, writable: false });
   const modules = {
     './src/diagnostics': {
       recordDiagnostic: (error, kind) => {
