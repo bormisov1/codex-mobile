@@ -53,7 +53,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#14221d"
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "extra": {
       "eas": {

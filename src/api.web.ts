@@ -1,9 +1,11 @@
 import type { ActiveThread, Attachment, GalleryFile, ServerRequest, StreamFrame, Thread, Workspace } from './types';
 import { originOf, pathForThread } from './model';
+import type { BasicCredentials } from './auth';
 export class ApiError extends Error { constructor(message:string,public status:number){super(message)} }
 export class CodexApi {
   readonly origin:string;
-  constructor(input:string){originOf(input);this.origin=window.location.origin}
+  constructor(input:string,_credentials?:BasicCredentials){originOf(input);this.origin=window.location.origin}
+  mediaHeaders(_cookie=''):Record<string,string> { return {}; }
   async cookie():Promise<string> { return ''; }
   async request<T>(path:string,method='GET',body?:unknown):Promise<T> {
     const headers:Record<string,string>={Accept:'application/json'};

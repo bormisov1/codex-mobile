@@ -6,9 +6,11 @@ A React Native (Expo SDK 57, TypeScript) companion for the existing Codex WebUI 
 
 1. Make the Codex WebUI server reachable from the phone at a stable origin. For direct Tailscale access, bind `HOST` to the server's Tailscale IP and enter `http://<Tailscale-IP>:4545` in the app; the VPN encrypts that private route. The default `127.0.0.1:4545` works only on the server machine. If using an HTTPS reverse proxy instead, set the server's `PUBLIC_ORIGIN` to that exact pathless HTTPS origin.
 2. Build a development client (`npm run ios` or `npm run android`). Android can also use an EAS build. Expo Go cannot load the native cookie and speech modules.
-3. Enter the full server origin and the WebUI password on the sign-in screen. The password is never persisted; only the server-issued HttpOnly session cookie is kept by the native cookie store. The origin and non-secret preferences/drafts are stored with AsyncStorage.
+3. Enter the full server origin and WebUI password on the sign-in screen. If an HTTPS reverse proxy uses HTTP Basic Auth, also enter its username and password. The native app saves the address and credentials in iOS Keychain or Android Keystore through Expo SecureStore; iOS requires a device passcode. The server-issued HttpOnly session cookie stays in the native cookie store. Signing out clears saved passwords, while non-secret preferences and drafts remain in AsyncStorage. The browser preview does not persist credentials.
 
 Every write, including login, sends the exact configured `Origin`. Authenticated JSON, SSE, image, and download requests send the native session cookie. The server does not support browser CORS access from another origin. iOS ATS and Android cleartext traffic are enabled so a local HTTP development host can be reached; use a private Tailscale route or private HTTPS reverse proxy for normal operation. Avoid exposing this full-machine Codex service to the public Internet.
+
+HTTP Basic Auth credentials are sent only to HTTPS server origins. The app relies on platform protected storage rather than a custom PIN and AES key derived from a short PIN. On iOS, saved credentials stay on this device and are removed if the device passcode is removed.
 
 ## Development
 
