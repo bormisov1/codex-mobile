@@ -3,23 +3,28 @@
 if (!__DEV__ && typeof navigator !== 'undefined' && navigator.product === 'ReactNative') {
   const previousHandler = global.RN$handleException;
   let fatalShown = false;
+  const diagnostics = require('./src/diagnostics');
+
+  // Hermes only installs this tracker in development. Keep a bounded local
+  // record of unexpected rejections in TestFlight builds as well.
+  try {
+    global.HermesInternal?.enablePromiseRejectionTracker?.({
+      allRejections: true,
+      onUnhandled: (_id, rejection) => diagnostics.recordDiagnostic(rejection, 'unhandled promise'),
+    });
+  } catch {}
 
   global.RN$handleException = (error, isFatal, reportToConsole) => {
     if (!isFatal) return previousHandler?.(error, isFatal, reportToConsole) || false;
     if (fatalShown) return true;
     fatalShown = true;
 
-    const name = error?.name || 'Error';
-    const message = error?.message || String(error);
-    const details = [
-      `Modex fatal JavaScript error · ${new Date().toISOString()}`,
-      `${name}: ${message}`,
-      error?.stack || 'No JavaScript stack was available.',
-    ].join('\n\n');
+    const entry = diagnostics.recordDiagnostic(error, 'fatal JavaScript error');
+    const details = diagnostics.formatDiagnostic(entry);
 
     try {
       const { Alert, Share } = require('react-native');
-      Alert.alert('Modex error', `${name}: ${message}`.slice(0, 1000), [
+      Alert.alert('Modex error', `${entry.name}: ${entry.message}`.slice(0, 1000), [
         { text: 'Copy details', onPress: () => {
           try { void require('expo-clipboard').setStringAsync(details).catch(() => {}); } catch {}
         } },

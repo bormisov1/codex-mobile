@@ -26,7 +26,7 @@ Android still uses Expo EAS for its release job. Before enabling `MOBILE_ANDROID
 
 Use `npm run start` for the development client. `npm run ios` requires macOS with Xcode and CocoaPods; this Linux workstation relies on the macOS CI runner for iOS compile checks. A physical phone must reach the trusted Codex WebUI server, which currently listens on this computer's `127.0.0.1:4545`. Configure a private network route such as Tailscale before signing in; see [CONNECT_TO_SERVER.md](CONNECT_TO_SERVER.md).
 
-In TestFlight builds, a fatal JavaScript error shows a **Modex error** alert with the original message. Use **Copy details** or **Share details** to send the JavaScript stack. Apple's TestFlight `.crash` download may otherwise show only `RCTFatal` without the JavaScript exception. Restart Modex after recording the details.
+In TestFlight builds, a fatal JavaScript error shows a **Modex error** alert with the original message. Use **Copy details** or **Share details** to send the JavaScript stack. Modex also keeps the 10 most recent fatal JavaScript errors, React render errors, and unhandled promise rejections on the device. Open **Diagnostics** on the sign-in screen or in the Threads drawer to review, copy, share, or clear them after a restart. Reports are shared only when the user chooses to share them; review their text for private information first. Apple's TestFlight `.crash` download may otherwise show only `RCTFatal` without the JavaScript exception. Native iOS crashes can end the process before JavaScript saves a report; retrieve those from TestFlight.
 
 ## References
 
