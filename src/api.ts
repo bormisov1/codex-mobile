@@ -21,8 +21,9 @@ export class CodexApi {
     return c.codex_webui_session?.value?`codex_webui_session=${c.codex_webui_session.value}`:'';
   }
   async request<T>(path:string,method='GET',body?:unknown):Promise<T> {
-    const cookie=await this.cookie();
-    const headers:Record<string,string>={Accept:'application/json',...this.mediaHeaders(cookie)};
+    // React Native adds cookies from its native store with credentials:'include'.
+    // Supplying the same Cookie header again makes iOS concatenate both values.
+    const headers:Record<string,string>={Accept:'application/json',...this.mediaHeaders()};
     if(method!=='GET') {headers.Origin=this.origin;headers['Content-Type']='application/json'}
     let response:Response;
     try {response=await fetch(this.origin+path,{method,headers,body:body===undefined?undefined:JSON.stringify(body),credentials:'include'});} catch(e){throw new ApiError(`Cannot reach ${this.origin}: ${String(e)}`,0)}
@@ -57,8 +58,7 @@ export class CodexApi {
   amtConnect(key:string){return this.request('/api/amt/connect','POST',{key})}
   amtDisconnect(){return this.request('/api/amt/connect','DELETE',{})}
   async events(onFrame:(frame:StreamFrame)=>void,onState:(state:'connected'|'reconnecting'|'failed')=>void):Promise<()=>void>{
-    const cookie=await this.cookie();
-    const source=new EventSource< 'message' >(this.origin+'/api/events',{headers:this.mediaHeaders(cookie),withCredentials:true,pollingInterval:3000,timeout:30000});
+    const source=new EventSource< 'message' >(this.origin+'/api/events',{headers:this.mediaHeaders(),withCredentials:true,pollingInterval:3000,timeout:30000});
     source.addEventListener('open',()=>onState('connected'));
     source.addEventListener('error',()=>onState('reconnecting'));
     source.addEventListener('message',e=>{try{if(e.data)onFrame(JSON.parse(e.data) as StreamFrame)}catch{}});
