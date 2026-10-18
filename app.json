@@ -16,6 +16,7 @@
           "NSAllowsLocalNetworking": true
         },
         "NSMicrophoneUsageDescription": "Speech dictation for messages to your Codex server.",
+        "NSPhotoLibraryUsageDescription": "Select photos to attach to messages in Modex.",
         "NSSpeechRecognitionUsageDescription": "Transcribe your speech into a message."
       }
     },

@@ -39,7 +39,7 @@
       </dict>
     </array>
     <key>CFBundleVersion</key>
-    <string>1</string>
+    <string>$(CURRENT_PROJECT_VERSION)</string>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
     <key>LSMinimumSystemVersion</key>
@@ -61,6 +61,8 @@
     <string>Expo Dev Launcher uses the local network to discover and connect to development servers running on your computer.</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>Speech dictation for messages to your Codex server.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Select photos to attach to messages in Modex.</string>
     <key>NSSpeechRecognitionUsageDescription</key>
     <string>Transcribe your speech into a message.</string>
     <key>RCTMetroPort</key>
