@@ -16,7 +16,7 @@ Work on a `feat/*` branch from `dev` and open a pull request into `dev`; merge `
 
 Keep certificates, profiles, API keys, and passwords outside the repository. Apple only permits downloading an App Store Connect API private key once. The checked-in `ios/` directory is the source of truth for the native project; when native Expo configuration changes, regenerate it intentionally and review the diff before committing.
 
-After the first TestFlight upload is verified, `MOBILE_IOS_RELEASE_READY=true` may enable uploads on future `master` pushes. Leave it unset while preparing the feature branch. Do not promote `dev` into `master` until asked.
+Every push to `master` archives and uploads a new iOS TestFlight build. A manual dispatch uploads iOS only when `ios_testflight=true`. Do not promote `dev` into `master` until asked because promotion now publishes a TestFlight build automatically.
 
 ## Android
 
