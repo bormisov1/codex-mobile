@@ -87,9 +87,9 @@ export function ThreadSwipeRow({children,accent,danger,disabled,selected,openSid
  return <View onLayout={event=>{widthRef.current=event.nativeEvent.layout.width}} style={styles.clip}>
   <Animated.View pointerEvents="none" style={[styles.underlay,{backgroundColor:accent,opacity:starOpacity}]} />
   <Animated.View pointerEvents="none" style={[styles.underlay,{backgroundColor:danger,opacity:archiveOpacity}]} />
-  {openSide&&<Pressable accessibilityRole="button" accessibilityLabel={openSide==='star'?(pinned?'Unstar thread':'Star thread'):'Archive thread'} onPress={activateAction} style={[styles.action,openSide==='star'?styles.left:styles.right]}>
-   <Ionicons name={openSide==='star'?(pinned?'star':'star-outline'):'archive-outline'} color="#fff" size={21}/>
-   <Text style={styles.actionText}>{openSide==='star'?(pinned?'Unstar':'Star'):'Archive'}</Text>
+  {dragSide&&<Pressable accessibilityRole="button" accessibilityLabel={dragSide==='star'?(pinned?'Unstar thread':'Star thread'):'Archive thread'} onPress={activateAction} style={[styles.action,dragSide==='star'?styles.left:styles.right]}>
+   <Ionicons name={dragSide==='star'?(pinned?'star':'star-outline'):'archive-outline'} color="#fff" size={21}/>
+   <Text style={styles.actionText}>{dragSide==='star'?(pinned?'Unstar':'Star'):'Archive'}</Text>
   </Pressable>}
   <Animated.View {...(disabled?{}:panResponder.panHandlers)} accessibilityRole="button" accessibilityLabel={accessibilityLabel} accessibilityHint={disabled?'Double tap to select thread':'Swipe right to star or left to archive'} accessibilityState={{selected:disabled?selected:undefined}} accessibilityActions={disabled?[{name:'activate',label:'Select thread'}]:[{name:'activate',label:'Open thread'},{name:'star',label:pinned?'Unstar thread':'Star thread'},{name:'archive',label:'Archive thread'}]} onAccessibilityAction={event=>{switch(event.nativeEvent.actionName){case'activate':onPress();break;case'star':onTogglePin();break;case'archive':onArchive();break}}} style={{transform:[{translateX}]}}>
    <Pressable accessible={false} onPress={onPress} onLongPress={onLongPress}>{children}</Pressable>
