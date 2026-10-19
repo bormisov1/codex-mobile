@@ -2,8 +2,12 @@ node_modules/
 .expo/
 dist/
 web-build/
-ios/
 android/
 .env*
+credentials.json
+credentials/
+*.p12
+*.mobileprovision
+AuthKey_*.p8
 *.log
 .DS_Store

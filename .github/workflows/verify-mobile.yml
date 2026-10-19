@@ -55,14 +55,12 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci --include=dev
-      - run: npx expo prebuild --platform ios --no-install
       - run: pod install --project-directory=ios
       - name: Compile unsigned iOS simulator app
         run: |
-          workspace=$(find ios -maxdepth 1 -name '*.xcworkspace' -print -quit)
           xcodebuild build \
-            -workspace "$workspace" \
-            -scheme CodexMobile \
+            -workspace ios/Modex.xcworkspace \
+            -scheme Modex \
             -configuration Release \
             -destination 'generic/platform=iOS Simulator' \
             CODE_SIGNING_ALLOWED=NO
