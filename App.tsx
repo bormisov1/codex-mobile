@@ -38,14 +38,14 @@ function Action({label,onPress,colors,kind='plain',disabled=false,icon}: {label:
 }
 function IconButton({name,onPress,colors,size:iconSize=22}: {name:keyof typeof Ionicons.glyphMap;onPress:()=>void;colors:Colors;size?:number}){return <Pressable accessibilityRole="button" onPress={onPress} style={styles.iconButton}><Ionicons name={name} size={iconSize} color={colors.text}/></Pressable>}
 const ledStyles=StyleSheet.create({
- large:{position:'absolute',width:11,height:11,top:1,left:1,transform:[{rotate:'-18deg'}]},
- small:{position:'absolute',width:8,height:8,right:1,bottom:1,transform:[{rotate:'-18deg'}]},
- largeOuter:{position:'absolute',width:11,height:11,borderRadius:7,borderTopWidth:1.5,borderLeftWidth:1.5,borderTopColor:'rgba(255,255,255,.96)',borderLeftColor:'rgba(255,255,255,.96)'},
- largeMiddle:{position:'absolute',width:9,height:9,top:1,left:1,borderRadius:6,borderTopWidth:1,borderLeftWidth:1,borderTopColor:'rgba(255,255,255,.55)',borderLeftColor:'rgba(255,255,255,.55)'},
- largeInner:{position:'absolute',width:7,height:7,top:2,left:2,borderRadius:5,borderTopWidth:.75,borderLeftWidth:.75,borderTopColor:'rgba(255,255,255,.25)',borderLeftColor:'rgba(255,255,255,.25)'},
- smallOuter:{position:'absolute',width:8,height:8,borderRadius:5,borderRightWidth:1.25,borderBottomWidth:1.25,borderRightColor:'rgba(255,255,255,.62)',borderBottomColor:'rgba(255,255,255,.62)'},
- smallMiddle:{position:'absolute',width:6,height:6,right:1,bottom:1,borderRadius:4,borderRightWidth:.85,borderBottomWidth:.85,borderRightColor:'rgba(255,255,255,.34)',borderBottomColor:'rgba(255,255,255,.34)'},
- smallInner:{position:'absolute',width:4,height:4,right:2,bottom:2,borderRadius:3,borderRightWidth:.65,borderBottomWidth:.65,borderRightColor:'rgba(255,255,255,.18)',borderBottomColor:'rgba(255,255,255,.18)'},
+ large:{position:'absolute',width:14,height:14,top:1,left:1},
+ small:{position:'absolute',width:14,height:14,top:1,left:1},
+ largeOuter:{position:'absolute',width:14,height:14,borderRadius:7,borderTopWidth:1.5,borderLeftWidth:1.5,borderTopColor:'rgba(255,255,255,.96)',borderLeftColor:'rgba(255,255,255,.96)'},
+ largeMiddle:{position:'absolute',width:12,height:12,top:1,left:1,borderRadius:6,borderTopWidth:1,borderLeftWidth:1,borderTopColor:'rgba(255,255,255,.55)',borderLeftColor:'rgba(255,255,255,.55)'},
+ largeInner:{position:'absolute',width:10,height:10,top:2,left:2,borderRadius:5,borderTopWidth:.75,borderLeftWidth:.75,borderTopColor:'rgba(255,255,255,.25)',borderLeftColor:'rgba(255,255,255,.25)'},
+ smallOuter:{position:'absolute',width:14,height:14,borderRadius:7,borderRightWidth:1.1,borderBottomWidth:1.1,borderRightColor:'rgba(255,255,255,.58)',borderBottomColor:'rgba(255,255,255,.58)'},
+ smallMiddle:{position:'absolute',width:12,height:12,top:1,left:1,borderRadius:6,borderRightWidth:.8,borderBottomWidth:.8,borderRightColor:'rgba(255,255,255,.3)',borderBottomColor:'rgba(255,255,255,.3)'},
+ smallInner:{position:'absolute',width:10,height:10,top:2,left:2,borderRadius:5,borderRightWidth:.6,borderBottomWidth:.6,borderRightColor:'rgba(255,255,255,.14)',borderBottomColor:'rgba(255,255,255,.14)'},
 });
 function StatusLed({color,label,onPress}:{color:string;label:string;onPress:()=>void}){
  const large=useRef(new Animated.Value(.72)).current,small=useRef(new Animated.Value(.38)).current;
