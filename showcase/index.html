@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0e1011">
+  <title>Modex Component Lab</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="gallery" id="gallery">
+    <header class="gallery-head">
+      <span class="eyebrow">MODEX · COMPONENT LAB</span>
+      <h1>Pick a surface.</h1>
+      <p>Tap a card to enter its interactive mock. Everything here is sample data.</p>
+    </header>
+
+    <section class="design-grid" aria-label="Component designs">
+      <button class="design-card" data-screen="signals" aria-label="Open status and notifications design">
+        <span class="preview preview-signals">
+          <span class="mini-top"><span>Build session</span><span class="led led-green"></span><b>•••</b></span>
+          <span class="mini-toast"><i>!</i><span><b>Connection interrupted</b><small>Swipe to dismiss</small></span></span>
+          <span class="mini-lines"><i></i><i></i><i></i></span>
+        </span>
+        <span class="card-copy"><strong>Status & notifications</strong><small>Darker glass toast + LED indicators</small></span>
+      </button>
+
+      <button class="design-card" data-screen="composer" aria-label="Open composer design">
+        <span class="preview preview-composer">
+          <span class="chat-line user"></span><span class="chat-line"></span><span class="chat-line short"></span>
+          <span class="mini-composer"><span>Message Codex…</span><i>↑</i></span>
+        </span>
+        <span class="card-copy"><strong>Message composer</strong><small>Attachments, reasoning, and send states</small></span>
+      </button>
+
+      <button class="design-card" data-screen="approval" aria-label="Open approval design">
+        <span class="preview preview-approval">
+          <span class="approval-sheet"><i>⌁</i><b>Allow this action?</b><small>npm run build</small><span><em>Deny</em><em>Allow</em></span></span>
+        </span>
+        <span class="card-copy"><strong>Approval drawer</strong><small>Focused review before an action</small></span>
+      </button>
+
+      <button class="design-card" data-screen="threads" aria-label="Open thread list design">
+        <span class="preview preview-threads">
+          <span class="thread"><i>●</i><span><b>Fix status indicator</b><small>working now</small></span></span>
+          <span class="thread"><i>○</i><span><b>Release checklist</b><small>12 min ago</small></span></span>
+          <span class="thread"><i>○</i><span><b>API review</b><small>yesterday</small></span></span>
+        </span>
+        <span class="card-copy"><strong>Thread browser</strong><small>Search, pin, and activity states</small></span>
+      </button>
+    </section>
+  </main>
+
+  <section class="simulator" id="simulator" aria-hidden="true">
+    <div class="sim-shell">
+      <header class="app-top">
+        <button class="back" id="back" aria-label="Back to designs">‹</button>
+        <div><strong id="screenTitle">Status & notifications</strong><small>/projects/modex</small></div>
+        <button class="status-button" id="statusButton" aria-label="Toggle connection status"><span class="led led-green" id="mainLed"></span></button>
+        <button class="more" aria-label="More actions">•••</button>
+      </header>
+      <div class="app-meta"><span id="metaText">Moderate · Ready</span><span>Usage & activity ›</span></div>
+      <div class="screen" id="screen"></div>
+    </div>
+  </section>
+
+  <template id="signals">
+    <div class="signals-screen">
+      <div class="notification-toast" id="sampleToast"><span class="alert-icon">!</span><div><strong>Connection interrupted</strong><p>The agent went offline. Reconnecting…</p></div><button aria-label="Dismiss notification">×</button></div>
+      <div class="conversation-copy"><span>CODEX</span><p>The interface remains usable while the connection recovers. The notification uses a darker red at 76% opacity.</p></div>
+      <div class="signal-controls">
+        <button id="showToast">Show notification</button>
+        <button id="toggleStatus">Toggle red / green LED</button>
+      </div>
+      <p class="spec-note">LED: darker core · 2–3px diffuse halo · two stationary CSS crescent reflections inside the circle.</p>
+    </div>
+  </template>
+
+  <template id="composer">
+    <div class="mock-chat"><span>YOU</span><p>Make the status feedback quieter and more tactile.</p><span>CODEX</span><p>I’ll refine the signal colors while preserving quick recognition.</p></div>
+    <div class="full-composer"><textarea aria-label="Mock message" placeholder="Message Codex… (/ for commands)"></textarea><div><button>＋</button><button>◉</button><span>High reasoning⌄</span><button class="send">↑</button></div></div>
+  </template>
+
+  <template id="approval">
+    <div class="dim-chat"><p>Reviewing project changes…</p></div>
+    <div class="full-sheet"><div class="grabber"></div><span class="hand">⌁</span><h2>Run command?</h2><p>Codex wants to run a local build for this project.</p><code>npm run build:web</code><button class="wide">View full request</button><div><button>Deny</button><button>Allow once</button><button class="primary">Allow for session</button></div></div>
+  </template>
+
+  <template id="threads">
+    <div class="thread-screen"><label>Search threads…</label><button class="new-thread">＋ New thread</button><div class="thread-row active"><i>●</i><span><b>Fix status indicator</b><small>codex-mobile · working</small></span><em>›</em></div><div class="thread-row"><i>☆</i><span><b>Release checklist</b><small>codex-mobile · 12 min ago</small></span><em>›</em></div><div class="thread-row"><i>☆</i><span><b>API review</b><small>server · yesterday</small></span><em>›</em></div></div>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
