@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {activityDetail, activityEvent, activityOf, chatTokenCount, originOf, eventThreadId, messagesOf, isDecisionRequest, isRateLimitError, isLocalResource, planOf, rateReset, reconcileActivity, pathForThread, usageDetails} from '../src/model.ts';
+import {activityDetail, activityEvent, activityOf, chatTokenCount, originOf, eventThreadId, interruptTurnId, isWorking, messagesOf, isDecisionRequest, isRateLimitError, isLocalResource, planOf, rateReset, reconcileActivity, pathForThread, usageDetails} from '../src/model.ts';
 
 test('server origin accepts a pathless HTTP or HTTPS origin only',()=>{
  assert.equal(originOf('https://codex.example.com/'),'https://codex.example.com');
@@ -11,6 +11,15 @@ test('thread paths encode IDs and events identify their thread',()=>{
  assert.equal(pathForThread('a/b'),'/api/threads/a%2Fb');
  assert.equal(eventThreadId({method:'turn/started',params:{turn:{threadId:'t1'}}}),'t1');
  assert.equal(eventThreadId({method:'turn/started',params:{thread:{id:'t2'}}}),'t2');
+});
+test('working state and interrupt target ignore stale completed turns',()=>{
+ const completed={id:'t',cwd:'/',status:{type:'idle'},turns:[{id:'old',status:'completed',items:[]}]};
+ assert.equal(isWorking(completed,new Set()),false);
+ assert.equal(interruptTurnId(completed),undefined);
+ const running={...completed,status:{type:'active'},turns:[{id:'current',status:'inProgress',items:[]}]};
+ assert.equal(isWorking(running,new Set()),true);
+ assert.equal(interruptTurnId(running),'current');
+ assert.equal(interruptTurnId(completed,{turnId:'server-turn'}),'server-turn');
 });
 test('durable item history retains user, assistant, and commentary',()=>{
  const thread={id:'t',cwd:'/workspace',turns:[{id:'turn',status:'completed',items:[{type:'userMessage',content:[{type:'text',text:'Hello'}]},{type:'agentMessage',text:'World'},{type:'agentMessage',phase:'commentary',text:'Checking files'}]}]};

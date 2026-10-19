@@ -106,7 +106,12 @@ export function activityDetail(item:ThreadItem):string {
   }).filter(Boolean).join('\n').slice(-12000);
   return '';
 }
-export function isWorking(thread:Thread|undefined,activeIds:Set<string>):boolean { return !!thread && (activeIds.has(thread.id) || thread.status?.type==='active' || thread.turns?.at(-1)?.status==='inProgress') }
+export function isWorking(thread:Thread|undefined,activeIds:Set<string>):boolean { return !!thread && (activeIds.has(thread.id) || thread.status?.type==='active') }
+export function interruptTurnId(thread:Thread|undefined,active?:{turnId:string|null}):string|undefined {
+ if(active?.turnId) return active.turnId;
+ const last=thread?.turns?.at(-1);
+ return last?.status==='inProgress'?last.id:undefined;
+}
 export function eventThreadId(event:CodexEvent):string|undefined {
  const p=event.params||{}; return (p.threadId || (p.thread as {id?:string}|undefined)?.id || (p.turn as {threadId?:string}|undefined)?.threadId) as string|undefined;
 }
