@@ -37,6 +37,10 @@ test('rate-limit reset is converted from seconds, and local links are recognized
  const next=Math.floor(Date.now()/1000)+60;
  assert.equal(rateReset({rateLimits:{primary:{resetsAt:next}}}),next*1000);
  assert.equal(rateReset({rateLimits:{primary:{resetsAt:next*1000}}}),next*1000);
+ const now=2_000_000;
+ assert.equal(rateReset({rateLimits:{primary:{usedPercent:100,resetsAt:1900},secondary:{usedPercent:20,resetsAt:3000}}},now),undefined);
+ assert.equal(rateReset({rateLimits:{primary:{usedPercent:100,resetsAt:2500},secondary:{usedPercent:20,resetsAt:2100}}},now),2_500_000);
+ assert.equal(rateReset({rateLimits:{primary:{usedPercent:0,resetsAt:2500}}},now),undefined);
  assert.equal(isRateLimitError({message:'rate limit exceeded'}),true);
  assert.equal(isRateLimitError('some other failure'),false);
  assert.equal(isLocalResource('/home/work/image.png'),true);
