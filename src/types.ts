@@ -4,7 +4,7 @@ export type Theme = 'dark' | 'light';
 export type Accent = 'green' | 'blue' | 'purple' | 'gold';
 export interface Preferences {
   permissionMode: PermissionMode; effort: Effort; theme: Theme; accent: Accent;
-  density: 'comfortable' | 'compact'; autoScroll: boolean; notify: boolean;
+  density: 'comfortable' | 'compact'; autoScroll: boolean; notify: boolean; keepUsageWindowWarm: boolean;
   amtToolsEnabled: boolean; speechLanguage: 'auto' | 'ru-RU' | 'en-US';
   systemPrompts: Record<string,string>; autoResume: Record<string, boolean>;
 }
@@ -27,5 +27,5 @@ export interface ActivityEntry { id:string; title:string; detail:string; kind:st
 export interface PlanStep { step:string; status:string }
 export const DEFAULT_PREFERENCES:Preferences = {
   permissionMode:'moderate', effort:'', theme:'dark', accent:'green', density:'comfortable',
-  autoScroll:true, notify:false, amtToolsEnabled:false, speechLanguage:'auto', systemPrompts:{}, autoResume:{}
+  autoScroll:true, notify:false, keepUsageWindowWarm:false, amtToolsEnabled:false, speechLanguage:'auto', systemPrompts:{}, autoResume:{}
 };
