@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {activityDetail, chatTokenCount, originOf, eventThreadId, messagesOf, isDecisionRequest, isRateLimitError, isLocalResource, planOf, rateReset, pathForThread, usageDetails} from '../src/model.ts';
+import {activityDetail, activityEvent, activityOf, chatTokenCount, originOf, eventThreadId, messagesOf, isDecisionRequest, isRateLimitError, isLocalResource, planOf, rateReset, reconcileActivity, pathForThread, usageDetails} from '../src/model.ts';
 
 test('server origin accepts a pathless HTTP or HTTPS origin only',()=>{
  assert.equal(originOf('https://codex.example.com/'),'https://codex.example.com');
@@ -54,6 +54,27 @@ test('activity details never expose empty protocol objects',()=>{
  assert.equal(activityDetail({type:'reasoning',id:'r1',summary:[],content:[]}), '');
  assert.equal(activityDetail({type:'reasoning',summary:[{type:'text',text:'Checking the project'}]}),'Checking the project');
  assert.equal(activityDetail({type:'fileChange',changes:[{type:'modified',path:'App.tsx'}]}),'modified: App.tsx');
+});
+test('durable activity infers only the current item as running',()=>{
+ const active={id:'turn',status:'inProgress',startedAt:100,items:[{id:'r1',type:'reasoning',summary:[{text:'First'}]},{id:'c1',type:'commandExecution',command:'npm test'}]};
+ assert.deepEqual(activityOf(active).map(x=>[x.id,x.status]),[['r1','done'],['c1','running']]);
+ assert.equal(activityOf({...active,status:'completed'}).at(-1).status,'done');
+ assert.equal(activityOf({...active,status:'failed'}).at(-1).status,'failed');
+});
+test('live activity transitions preserve details and finish on turn completion',()=>{
+ let entries=activityEvent([],{method:'item/started',params:{item:{id:'r1',type:'reasoning'}}},100);
+ entries=activityEvent(entries,{method:'item/reasoning/summaryTextDelta',params:{itemId:'r1',delta:'Checking '}},110);
+ entries=activityEvent(entries,{method:'item/reasoning/summaryTextDelta',params:{itemId:'r1',delta:'files'}},120);
+ assert.deepEqual([entries[0].status,entries[0].detail,entries[0].at],['running','Checking files',100]);
+ entries=activityEvent(entries,{method:'turn/completed',params:{turn:{status:'completed'}}},130);
+ assert.equal(entries[0].status,'done');
+});
+test('durable polling reconciles stale live statuses in both directions',()=>{
+ const staleDone=[{id:'r1',kind:'reasoning',title:'Thinking',detail:'Live',status:'done',at:100}];
+ const active={id:'turn',status:'inProgress',items:[{id:'r1',type:'reasoning',summary:[]}]};
+ assert.equal(reconcileActivity(staleDone,active)[0].status,'running');
+ const staleRunning=[{...staleDone[0],status:'running'}];
+ assert.equal(reconcileActivity(staleRunning,{...active,status:'completed'})[0].status,'done');
 });
 test('a saved plan is reconstructed from last turn',()=>{
  const thread={id:'t',cwd:'/',turns:[{id:'a',status:'completed',items:[{type:'plan',plan:[{step:'Check',status:'completed'}]}]}]};
