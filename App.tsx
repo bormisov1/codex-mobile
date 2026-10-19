@@ -39,7 +39,7 @@ function Action({label,onPress,colors,kind='plain',disabled=false,icon}: {label:
 }
 function IconButton({name,onPress,colors,size:iconSize=22}: {name:keyof typeof Ionicons.glyphMap;onPress:()=>void;colors:Colors;size?:number}){return <Pressable accessibilityRole="button" onPress={onPress} style={styles.iconButton}><Ionicons name={name} size={iconSize} color={colors.text}/></Pressable>}
 const ledStyles=StyleSheet.create({
- large:{position:'absolute',width:14,height:14,top:1,left:1},
+ large:{position:'absolute',width:7.5,height:7.5,top:1,left:1,overflow:'hidden'},
  small:{position:'absolute',width:14,height:14,top:1,left:1},
  largeOuter:{position:'absolute',width:14,height:14,borderRadius:7,borderTopWidth:1.5,borderLeftWidth:1.5,borderTopColor:'rgba(255,255,255,.96)',borderLeftColor:'rgba(255,255,255,.96)'},
  largeMiddle:{position:'absolute',width:12,height:12,top:1,left:1,borderRadius:6,borderTopWidth:1,borderLeftWidth:1,borderTopColor:'rgba(255,255,255,.55)',borderLeftColor:'rgba(255,255,255,.55)'},
