@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {activityDetail, activityEvent, activityOf, chatTokenCount, originOf, eventThreadId, interruptTurnId, isAlreadyStoppedError, isWorking, messagesOf, isDecisionRequest, isRateLimitError, isLocalResource, planOf, rateReset, reconcileActivity, pathForThread, usageDetails, usageWarmupKey} from '../src/model.ts';
+import {activityDetail, activityEvent, activityOf, chatTokenCount, countdownLabel, originOf, eventThreadId, interruptTurnId, isAlreadyStoppedError, isWorking, messagesOf, isDecisionRequest, isRateLimitError, isLocalResource, planOf, rateReset, reconcileActivity, pathForThread, usageDetails, usageWarmupKey} from '../src/model.ts';
 
 test('server origin accepts a pathless HTTP or HTTPS origin only',()=>{
  assert.equal(originOf('https://codex.example.com/'),'https://codex.example.com');
@@ -46,6 +46,11 @@ test('already-finished interruption errors are safe to suppress',()=>{
  assert.equal(isAlreadyStoppedError(new Error('Turn is not active')),true);
  assert.equal(isAlreadyStoppedError('Turn already interrupted'),true);
  assert.equal(isAlreadyStoppedError(new Error('Network unavailable')),false);
+});
+test('countdowns retain ticking seconds alongside hours and minutes',()=>{
+ assert.equal(countdownLabel(7),'7s');
+ assert.equal(countdownLabel(127),'2m 7s');
+ assert.equal(countdownLabel(7384),'2h 3m 4s');
 });
 test('Codex usage is normalized from API and live event payloads',()=>{
  const screenshotPayload={rateLimits:{limitId:'codex',limitName:null,primary:{usedPercent:0,windowDurationMins:300,resetsAt:1792397861},secondary:{usedPercent:26,windowDurationMins:10080,resetsAt:1792895195},credits:{hasCredits:false,unlimited:false,balance:'0'},planType:'plus'}};

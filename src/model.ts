@@ -181,6 +181,10 @@ export function rateReset(value:unknown):number|undefined {
 }
 export function isRateLimitError(value:unknown):boolean { return /rate.?limit|usage.?limit|quota|too many requests|429/i.test(typeof value==='string'?value:JSON.stringify(value||'')) }
 export function isAlreadyStoppedError(value:unknown):boolean { return /already (?:stopped|interrupted|completed)|not active|no active turn|turn.*(?:finished|not found)|cannot interrupt/i.test(value instanceof Error?value.message:typeof value==='string'?value:JSON.stringify(value||'')) }
+export function countdownLabel(totalSeconds:number):string {
+ const seconds=Math.max(0,Math.ceil(totalSeconds)),hours=Math.floor(seconds/3600),minutes=Math.floor((seconds%3600)/60),rest=seconds%60;
+ return [hours?`${hours}h`:null,(hours||minutes)?`${minutes}m`:null,`${rest}s`].filter(Boolean).join(' ');
+}
 export function planOf(thread?:Thread|null):PlanStep[] {
  const items=thread?.turns?.at(-1)?.items||[];
  const item=[...items].reverse().find(i=>i.type==='plan');
