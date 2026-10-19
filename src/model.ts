@@ -33,10 +33,59 @@ export function itemImagePaths(item:ThreadItem):string[] {
 }
 export function activityOf(turn?:Turn):ActivityEntry[] {
   if(!turn) return [];
-  return (turn.items||[]).filter(i=>!['userMessage','agentMessage'].includes(i.type) || i.phase==='commentary').map((item,index)=>({
+  const items=(turn.items||[]).filter(i=>!['userMessage','agentMessage'].includes(i.type) || i.phase==='commentary');
+  return items.map((item,index)=>({
     id:item.id||String(index), title:activityTitle(item), detail:activityDetail(item), kind:item.type,
-    status:String(item.status||'done'), at:Number(item.startedAt||item.completedAt||Date.now())
+    status:activityStatus(item.status,index===items.length-1?turn.status:undefined), at:Number(item.completedAt||item.startedAt||turn.completedAt||turn.startedAt||0)
   }));
+}
+function rawStatus(value:unknown):string|undefined {
+ const status=typeof value==='string'?value:record(value)?.type;
+ return typeof status==='string'&&status.trim()?status.trim():undefined;
+}
+export function activityStatus(itemStatus:unknown,turnStatus?:unknown):string {
+ const item=rawStatus(itemStatus)?.replace(/[\s_-]/g,'').toLowerCase();
+ const turn=rawStatus(turnStatus)?.replace(/[\s_-]/g,'').toLowerCase();
+ const terminalTurn=turn&&!['active','inprogress','running','started','pending'].includes(turn)?turn:undefined;
+ if(terminalTurn&&(!item||['active','inprogress','running','started','pending'].includes(item))) {
+  if(['completed','complete','succeeded','success','done'].includes(terminalTurn)) return 'done';
+  if(['failed','error'].includes(terminalTurn)) return 'failed';
+  return ['cancelled','canceled','aborted','interrupted'].includes(terminalTurn)?'interrupted':terminalTurn;
+ }
+ if(!item) return turn&&['active','inprogress','running','started'].includes(turn)?'running':'done';
+ if(['completed','complete','succeeded','success','done'].includes(item)) return 'done';
+ if(['active','inprogress','running','started'].includes(item)) return 'running';
+ if(['failed','error'].includes(item)) return 'failed';
+ if(['cancelled','canceled','aborted','interrupted'].includes(item)) return 'interrupted';
+ return rawStatus(itemStatus)||'done';
+}
+export function reconcileActivity(live:ActivityEntry[],turn?:Turn):ActivityEntry[] {
+ if(!turn) return live;
+ const durable=activityOf(turn),liveById=new Map(live.map(entry=>[entry.id,entry]));
+ const durableIds=new Set(durable.map(entry=>entry.id));
+ const terminalStatus=activityStatus(undefined,turn.status);
+ const remaining=live.filter(entry=>!durableIds.has(entry.id)).map(entry=>entry.status==='running'&&terminalStatus!=='running'?{...entry,status:terminalStatus}:entry);
+ return [...remaining,...durable.map(entry=>{const transient=liveById.get(entry.id);return transient?{...transient,...entry,detail:entry.detail||transient.detail,at:entry.at||transient.at}:entry})].slice(0,100);
+}
+export function activityEvent(entries:ActivityEntry[],event:CodexEvent,at=Date.now()):ActivityEntry[] {
+ const p=event.params||{};
+ if(event.method==='turn/completed') {
+  const status=activityStatus(undefined,(p.turn as Record<string,unknown>|undefined)?.status??p.status??'completed');
+  return entries.map(entry=>entry.status==='running'?{...entry,status}:entry);
+ }
+ const item=p.item as ThreadItem|undefined;
+ if((event.method==='item/started'||event.method==='item/completed')&&item) {
+  const id=String(item.id||`${event.method}:${at}`),previous=entries.find(entry=>entry.id===id);
+  const next:ActivityEntry={id,kind:item.type||previous?.kind||'activity',title:activityTitle(item),detail:activityDetail(item)||previous?.detail||'',status:event.method==='item/started'?'running':activityStatus(item.status,'completed'),at:previous?.at||at};
+  return [next,...entries.filter(entry=>entry.id!==id)].slice(0,100);
+ }
+ if(!['item/commandExecution/outputDelta','item/reasoning/summaryTextDelta','item/plan/delta','item/fileChange/patchUpdated','turn/diff/updated'].includes(event.method)) return entries;
+ const id=String(p.itemId||event.method),previous=entries.find(entry=>entry.id===id);
+ const fragment=String(p.delta||p.patch||JSON.stringify(p)).slice(-12000);
+ const append=event.method.endsWith('/outputDelta')||event.method.endsWith('/summaryTextDelta')||event.method.endsWith('/delta');
+ const detail=(append&&previous?.detail?previous.detail+fragment:fragment).slice(-12000);
+ const next:ActivityEntry={id,kind:previous?.kind||event.method,title:previous?.title||event.method.split('/').slice(0,2).join(' · '),detail,status:'running',at:previous?.at||at};
+ return [next,...entries.filter(entry=>entry.id!==id)].slice(0,100);
 }
 export function activityTitle(item:ThreadItem):string {
   const names:Record<string,string>={reasoning:'Thinking',plan:'Plan',commandExecution:'Command',fileChange:'File changes',mcpToolCall:'MCP tool',dynamicToolCall:'Tool',collabAgentToolCall:'Subagent',webSearch:'Web search'};

@@ -11,7 +11,7 @@ import Markdown from 'react-native-markdown-display';
 import { ApiError, CodexApi } from './src/api';
 import { clearConnection, loadConnection, saveConnection } from './src/connection-store';
 import type { BasicCredentials } from './src/auth';
-import { activityDetail, activityOf, activityTitle, chatTokenCount, eventThreadId, extractText, isDecisionRequest, isLocalResource, itemImagePaths, isRateLimitError, isWorking, messagesOf, originOf, pathForThread, permissionLabel, planOf, rateReset, threadTitle, usageDetails } from './src/model';
+import { activityEvent, activityOf, chatTokenCount, eventThreadId, extractText, isDecisionRequest, isLocalResource, itemImagePaths, isRateLimitError, isWorking, messagesOf, originOf, pathForThread, permissionLabel, planOf, rateReset, reconcileActivity, threadTitle, usageDetails } from './src/model';
 import { DEFAULT_PREFERENCES } from './src/types';
 import type { ActiveThread, ActivityEntry, Attachment, CodexEvent, Effort, GalleryFile, PermissionMode, PlanStep, Preferences, QueuedMessage, ServerRequest, StreamFrame, Thread, Workspace } from './src/types';
 import { DiagnosticsPanel } from './src/DiagnosticsPanel';
@@ -118,7 +118,7 @@ function AppInner({onOpenDiagnostics}:{onOpenDiagnostics:()=>void}){
  useEffect(()=>{if(!ready||!api)return;api.session().then(()=>setAuthed(true)).catch(e=>{if(e instanceof ApiError&&e.status!==401)toast(e.message);setAuthed(false)})},[ready,api]);
  useEffect(()=>{if(api&&authed)api.cookie().then(cookie=>setGalleryHeaders(api.mediaHeaders(cookie))).catch(()=>{})},[api,authed]);
  const refreshThreads=useCallback(async(more=false,arch=false)=>{if(!api)return;setListBusy(true);try{const result=await api.threads(arch,more?(arch?archivedCursor||undefined:cursor||undefined):undefined);if(arch){setArchived(t=>more?[...t,...result.data]:result.data);setArchivedCursor(result.nextCursor||null)}else{setThreads(t=>more?[...t,...result.data]:result.data);setCursor(result.nextCursor||null)}}catch(e){fail(e)}finally{setListBusy(false)}},[api,cursor,archivedCursor]);
- const readThread=useCallback(async(id:string)=>{if(!api||!id)return;try{const result=await api.thread(id);const last=result.thread.turns?.at(-1);if(currentThreadId.current===id){setThread(result.thread);setCwd(result.thread.cwd||currentCwd.current);setPlan(planOf(result.thread));const savedTokens=chatTokenCount(result.thread.tokenUsage,last?.tokenUsage);if(savedTokens!==undefined)setLiveChatTokens(savedTokens)}setThreads(ts=>{const i=ts.findIndex(t=>t.id===id);return i<0?[result.thread,...ts]:ts.map(t=>t.id===id?{...t,...result.thread}:t)});
+ const readThread=useCallback(async(id:string)=>{if(!api||!id)return;try{const result=await api.thread(id);const last=result.thread.turns?.at(-1);if(currentThreadId.current===id){setThread(result.thread);setCwd(result.thread.cwd||currentCwd.current);setPlan(planOf(result.thread));setEvents(entries=>reconcileActivity(entries,last));const savedTokens=chatTokenCount(result.thread.tokenUsage,last?.tokenUsage);if(savedTokens!==undefined)setLiveChatTokens(savedTokens)}setThreads(ts=>{const i=ts.findIndex(t=>t.id===id);return i<0?[result.thread,...ts]:ts.map(t=>t.id===id?{...t,...result.thread}:t)});
    if(last?.status==='failed'&&isRateLimitError(last.error)&&prefsRef.current.autoResume[id]){const message=last.items?.find(x=>x.type==='userMessage');const body=extractText(message?.content);if(body){const limits=await api.rateLimits();const retryAt=rateReset(limits);if(retryAt)setResumeTasks(tasks=>tasks[id]?tasks:{...tasks,[id]:{text:body,attachments:[],retryAt}});else toast('Rate limit found, but no reset time was reported. Retry manually.')}}
  }catch(e){fail(e)}},[api]);
  const refreshStatus=useCallback(async()=>{if(!api)return;const results=await Promise.allSettled([api.activity(),api.rateLimits(),api.amtStatus()]);if(results[0].status==='fulfilled')setActive(results[0].value.activeThreads||[]);if(results[1].status==='fulfilled')setRate(results[1].value);if(results[2].status==='fulfilled')setAmt(results[2].value)},[api]);
@@ -132,13 +132,14 @@ function AppInner({onOpenDiagnostics}:{onOpenDiagnostics:()=>void}){
    if(frame.type==='server_request'){setRequests(r=>[...r.filter(x=>x.id!==frame.request.id),frame.request]);setSheet('approval');return}
    const e=frame.event,p=e.params||{},id=eventThreadId(e);
    if(e.method==='account/rateLimits/updated'){setRate(p);return}
-   if(e.method==='turn/started'||e.method==='thread/status/changed'){refreshStatus();refreshThreads();}
-   if(e.method==='turn/completed'){refreshStatus();refreshThreads();if(id)scheduleRead(id);if(prefsRef.current.notify){Notifications.scheduleNotificationAsync({content:{title:'Codex finished',body:id===currentThreadId.current?'Your current thread is ready.':'A background thread is ready.'},trigger:null}).catch(()=>{})}}
+   if(e.method==='turn/started'||e.method==='thread/status/changed'){if(e.method==='thread/status/changed')refreshStatus();refreshThreads();}
+   if(e.method==='turn/started'&&id){const turn=p.turn as {id?:string}|undefined;setActive(a=>[...a.filter(x=>x.threadId!==id),{threadId:id,turnId:turn?.id||String(p.turnId||'')||null}])}
+   if(e.method==='turn/completed'){if(id)setActive(a=>a.filter(x=>x.threadId!==id));refreshThreads();if(id)scheduleRead(id);if(prefsRef.current.notify){Notifications.scheduleNotificationAsync({content:{title:'Codex finished',body:id===currentThreadId.current?'Your current thread is ready.':'A background thread is ready.'},trigger:null}).catch(()=>{})}}
    if(id!==currentThreadId.current)return;
+   if(e.method==='turn/started'){setEvents([]);setStreamText('')}
    if(e.method==='thread/tokenUsage/updated'){const tokens=chatTokenCount(p.tokenUsage,p);if(tokens!==undefined)setLiveChatTokens(tokens);return}
    if(e.method==='item/agentMessage/delta'){const delta=String(p.delta||'');setStreamText(s=>s+delta)}
-   if(e.method==='item/started'||e.method==='item/completed'){const item=p.item as Record<string,unknown>|undefined;if(item){setEvents(a=>[{id:String(item.id||uid()),kind:String(item.type||'activity'),title:activityTitle(item as any),detail:activityDetail(item as any),status:e.method==='item/started'?'running':'done',at:Date.now()},...a.filter(x=>x.id!==item.id)].slice(0,100))}}
-   if(e.method==='item/commandExecution/outputDelta'||e.method==='item/reasoning/summaryTextDelta'||e.method==='item/plan/delta'||e.method==='item/fileChange/patchUpdated'||e.method==='turn/diff/updated'){setEvents(a=>[{id:String(p.itemId||e.method),kind:e.method,title:e.method.split('/').slice(0,2).join(' · '),detail:String(p.delta||p.patch||JSON.stringify(p)).slice(-12000),status:'running',at:Date.now()},...a.filter(x=>x.id!==String(p.itemId||e.method))].slice(0,100))}
+   setEvents(a=>activityEvent(a,e));
    if(e.method==='turn/plan/updated'){setPlan((p.plan as PlanStep[])||[])}
    if(e.method==='turn/completed'){setStreamText('');if(id)scheduleRead(id)}
  }
@@ -155,6 +156,7 @@ function AppInner({onOpenDiagnostics}:{onOpenDiagnostics:()=>void}){
      if(forceThreadId){targetCwd=threads.find(t=>t.id===forceThreadId)?.cwd||(await api.thread(forceThreadId)).thread.cwd;if(!targetCwd)throw new Error('Cannot find the queued thread workspace')}
      const result=await api.send(id,{text:bodyText,cwd:targetCwd,effort:prefs.effort,systemPrompt:prefs.systemPrompts[targetCwd]||'',amtToolsEnabled:prefs.amtToolsEnabled,permissionMode:prefs.permissionMode,attachments:files});
      setThread(t=>t&&t.id===id?{...t,turns:[...(t.turns||[]),{id:result.turn.id,status:'inProgress',items:[{type:'userMessage',content:[{type:'text',text:bodyText||`Attached ${files.map(f=>f.name).join(', ')}`}]}]}]}:t);
+     if(id===currentThreadId.current)setEvents([]);
      if(!forceThreadId){changeText('');setAttachments([])}setActive(a=>[...a.filter(x=>x.threadId!==id),{threadId:id,turnId:result.turn.id}]);scheduleRead(id);
    }catch(e){fail(e);if(isRateLimitError(e)&&(prefs.autoResume[id]||(!forceThreadId&&!threadId&&prefs.autoResume.new))){try{const limits=await api.rateLimits();const retryAt=rateReset(limits);if(retryAt)setResumeTasks(r=>({...r,[id]:{text:bodyText,attachments:files,retryAt}}));else toast('No rate-limit reset time was reported; retry manually.')}catch{}}if(!forceThreadId){changeText(bodyText);setAttachments(files)}throw e}finally{setBusy(false)}
  }
