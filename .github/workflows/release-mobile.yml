@@ -130,6 +130,21 @@ jobs:
             --apiKey "$ASC_KEY_ID" \
             --apiIssuer "$ASC_ISSUER_ID"
 
+      - name: Notify Telegram after successful upload
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "::notice::Telegram notification secrets are not configured"
+            exit 0
+          fi
+          run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          curl --fail-with-body --silent --show-error \
+            --request POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=✅ Modex build ${GITHUB_RUN_NUMBER} uploaded to TestFlight. Apple processing may continue. ${run_url}"
+
   android:
     if: ${{ vars.MOBILE_ANDROID_RELEASE_READY == 'true' }}
     runs-on: ubuntu-latest

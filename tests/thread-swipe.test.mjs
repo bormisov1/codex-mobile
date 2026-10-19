@@ -1,6 +1,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { clampSwipe, SWIPE_ACTION_WIDTH, swipeReleaseTarget } from '../src/thread-swipe.ts';
+import { clampSwipe, shouldCaptureSwipe, SWIPE_ACTION_WIDTH, swipeReleaseTarget } from '../src/thread-swipe.ts';
+
+test('locks only gestures that begin with clear horizontal intent',()=>{
+ assert.equal(shouldCaptureSwipe(12,3),true);
+ assert.equal(shouldCaptureSwipe(-12,3),true);
+ assert.equal(shouldCaptureSwipe(7,0),false);
+ assert.equal(shouldCaptureSwipe(12,11),false);
+ assert.equal(shouldCaptureSwipe(3,12),false);
+});
 
 test('clamps swipe translation to row width',()=>{
  assert.equal(clampSwipe(400,320),320);
