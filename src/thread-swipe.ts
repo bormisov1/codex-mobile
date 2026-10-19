@@ -2,6 +2,10 @@ export const SWIPE_ACTION_WIDTH = 92;
 
 export type SwipeSide = 'star' | 'archive';
 
+export function shouldCaptureSwipe(dx:number,dy:number){
+ return Math.abs(dx)>=8&&Math.abs(dx)>Math.abs(dy)*1.2;
+}
+
 export function clampSwipe(value:number,width:number){
  return Math.max(-width,Math.min(width,value));
 }

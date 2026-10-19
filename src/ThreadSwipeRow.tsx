@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { clampSwipe, SWIPE_ACTION_WIDTH, swipeReleaseTarget, type SwipeSide } from './thread-swipe';
+import { clampSwipe, shouldCaptureSwipe, SWIPE_ACTION_WIDTH, swipeReleaseTarget, type SwipeSide } from './thread-swipe';
 
 type Props={
  children:React.ReactNode;
@@ -15,11 +15,12 @@ type Props={
  onPress:()=>void;
  onLongPress:()=>void;
  onReveal:(side:SwipeSide|null)=>void;
+ onSwipeActiveChange:(active:boolean)=>void;
  onTogglePin:()=>void;
  onArchive:()=>void|Promise<void>;
 };
 
-export function ThreadSwipeRow({children,accent,danger,disabled,selected,openSide,pinned,accessibilityLabel,onPress,onLongPress,onReveal,onTogglePin,onArchive}:Props){
+export function ThreadSwipeRow({children,accent,danger,disabled,selected,openSide,pinned,accessibilityLabel,onPress,onLongPress,onReveal,onSwipeActiveChange,onTogglePin,onArchive}:Props){
  const translateX=useRef(new Animated.Value(0)).current;
  const startX=useRef(0);
  const widthRef=useRef(320);
@@ -59,8 +60,10 @@ export function ThreadSwipeRow({children,accent,danger,disabled,selected,openSid
  },[disabled,openSide,translateX]);
 
  const panResponder=useMemo(()=>PanResponder.create({
-  onMoveShouldSetPanResponder:(_,gesture)=>!disabledRef.current&&Math.abs(gesture.dx)>7&&Math.abs(gesture.dx)>Math.abs(gesture.dy)*1.15,
+  onMoveShouldSetPanResponder:(_,gesture)=>!disabledRef.current&&shouldCaptureSwipe(gesture.dx,gesture.dy),
+  onMoveShouldSetPanResponderCapture:(_,gesture)=>!disabledRef.current&&shouldCaptureSwipe(gesture.dx,gesture.dy),
   onPanResponderGrant:()=>{
+   onSwipeActiveChange(true);
    translateX.stopAnimation(current=>{startX.current=current});
   },
   onPanResponderMove:(_,gesture)=>{
@@ -70,15 +73,19 @@ export function ThreadSwipeRow({children,accent,danger,disabled,selected,openSid
    translateX.setValue(value);
   },
   onPanResponderRelease:(_,gesture)=>{
+   onSwipeActiveChange(false);
    const value=clampSwipe(startX.current+gesture.dx,widthRef.current);
    const result=swipeReleaseTarget(value,widthRef.current);
    if(result.commit&&result.side)commit(result.side,result.target);
    else settle(result.target,result.side);
   },
   onPanResponderTerminate:()=>{
+   onSwipeActiveChange(false);
    const side=openSideRef.current;
    settle(side==='star'?SWIPE_ACTION_WIDTH:side==='archive'?-SWIPE_ACTION_WIDTH:0,side);
   },
+  onPanResponderTerminationRequest:()=>false,
+  onShouldBlockNativeResponder:()=>true,
  }),[]);
 
  const starOpacity=translateX.interpolate({inputRange:[-1,0,1],outputRange:[0,0,1],extrapolate:'clamp'});
