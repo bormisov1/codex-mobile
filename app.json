@@ -33,6 +33,7 @@
     },
     "plugins": [
       "expo-document-picker",
+      "expo-image-picker",
       "expo-speech-recognition",
       "expo-sharing",
       "expo-font",
