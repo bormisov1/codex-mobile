@@ -174,9 +174,14 @@ export function chatTokenCount(...values:unknown[]):number|undefined {
  }
  return undefined;
 }
-export function rateReset(value:unknown):number|undefined {
- const o=value as {rateLimits?:{primary?:{resetsAt?:number|string};secondary?:{resetsAt?:number|string}}};
- const vals=[o?.rateLimits?.primary?.resetsAt,o?.rateLimits?.secondary?.resetsAt].map(x=>typeof x==='string'?Date.parse(x):typeof x==='number'?(x<1e11?x*1000:x):NaN).filter(x=>Number.isFinite(x)&&x>Date.now());
+export function rateReset(value:unknown,now=Date.now()):number|undefined {
+ const windows=usageDetails(value).windows;
+ if(windows.length){
+  const exhausted=windows.filter(window=>window.usedPercent>=100&&window.resetsAt&&window.resetsAt>now).map(window=>window.resetsAt!);
+  return exhausted.length?Math.min(...exhausted):undefined;
+ }
+ const data=record(value)||{},limits=record(data.rateLimits)||record(data.rate_limits)||data;
+ const vals=(['primary','secondary'] as const).map(key=>{const item=record(limits[key]);return timestamp(item?.resetsAt??item?.resets_at)}).filter((reset):reset is number=>reset!==undefined&&reset>now);
  return vals.length?Math.min(...vals):undefined;
 }
 export function isRateLimitError(value:unknown):boolean { return /rate.?limit|usage.?limit|quota|too many requests|429/i.test(typeof value==='string'?value:JSON.stringify(value||'')) }
