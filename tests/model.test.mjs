@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {originOf, eventThreadId, messagesOf, isDecisionRequest, isRateLimitError, isLocalResource, planOf, rateReset, pathForThread} from '../src/model.ts';
+import {activityDetail, chatTokenCount, originOf, eventThreadId, messagesOf, isDecisionRequest, isRateLimitError, isLocalResource, planOf, rateReset, pathForThread, usageDetails} from '../src/model.ts';
 
 test('server origin accepts a pathless HTTP or HTTPS origin only',()=>{
  assert.equal(originOf('https://codex.example.com/'),'https://codex.example.com');
@@ -32,6 +32,28 @@ test('rate-limit reset is converted from seconds, and local links are recognized
  assert.equal(isRateLimitError('some other failure'),false);
  assert.equal(isLocalResource('/home/work/image.png'),true);
  assert.equal(isLocalResource('https://example.com/image.png'),false);
+});
+test('Codex usage is normalized from API and live event payloads',()=>{
+ const screenshotPayload={rateLimits:{limitId:'codex',limitName:null,primary:{usedPercent:0,windowDurationMins:300,resetsAt:1792397861},secondary:{usedPercent:26,windowDurationMins:10080,resetsAt:1792895195},credits:{hasCredits:false,unlimited:false,balance:'0'},planType:'plus'}};
+ assert.deepEqual(usageDetails(screenshotPayload),{plan:'Plus',windows:[
+  {key:'primary',label:'5-hour limit',usedPercent:0,remainingPercent:100,resetsAt:1792397861000},
+  {key:'secondary',label:'Weekly limit',usedPercent:26,remainingPercent:74,resetsAt:1792895195000},
+ ]});
+ assert.deepEqual(usageDetails({rateLimits:{primary:{usedPercent:'12.5',windowDurationMins:'60',resetsAt:'2026-10-20T10:00:00Z'}}}).windows,[
+  {key:'primary',label:'1-hour limit',usedPercent:12.5,remainingPercent:87.5,resetsAt:Date.parse('2026-10-20T10:00:00Z')},
+ ]);
+ assert.deepEqual(usageDetails(undefined),{plan:undefined,windows:[]});
+});
+test('chat token count accepts durable and live Codex shapes',()=>{
+ assert.equal(chatTokenCount({totalTokenUsage:{totalTokens:12345}}),12345);
+ assert.equal(chatTokenCount({total:{total_tokens:'23456'}}),23456);
+ assert.equal(chatTokenCount({tokenUsage:{inputTokens:20,outputTokens:5}}),25);
+ assert.equal(chatTokenCount({},undefined),undefined);
+});
+test('activity details never expose empty protocol objects',()=>{
+ assert.equal(activityDetail({type:'reasoning',id:'r1',summary:[],content:[]}), '');
+ assert.equal(activityDetail({type:'reasoning',summary:[{type:'text',text:'Checking the project'}]}),'Checking the project');
+ assert.equal(activityDetail({type:'fileChange',changes:[{type:'modified',path:'App.tsx'}]}),'modified: App.tsx');
 });
 test('a saved plan is reconstructed from last turn',()=>{
  const thread={id:'t',cwd:'/',turns:[{id:'a',status:'completed',items:[{type:'plan',plan:[{step:'Check',status:'completed'}]}]}]};

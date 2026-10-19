@@ -1,35 +1,35 @@
 # Build and release flow
 
-This project follows the same long-lived branch pattern as `chinese-learn`: work on `feat/*`, open a pull request into `dev`, and promote `dev` to `master` with a separate pull request. The [`verify-mobile.yml`](.github/workflows/verify-mobile.yml) workflow checks every PR into `dev`; [`release-mobile.yml`](.github/workflows/release-mobile.yml) builds and submits both platforms when `master` changes after `MOBILE_RELEASE_READY=true` is configured. Do not merge a feature branch directly into `master`.
+Work on a `feat/*` branch from `dev` and open a pull request into `dev`; merge `dev` into `master` only when the user asks. The [verification workflow](.github/workflows/verify-mobile.yml) compiles the checked-in iOS Xcode project on a GitHub-hosted macOS runner for PRs into `dev`. The [release workflow](.github/workflows/release-mobile.yml) signs and uploads iOS builds to TestFlight with Xcode and altool. iOS CI does not use EAS Build, EAS Submit, or Expo prebuild.
 
-## First-time setup
+## iOS TestFlight setup
 
-1. Create a private GitHub repository, add it as `origin`, and push `master` and `dev`; the release jobs stay skipped until the repository variable `MOBILE_RELEASE_READY` is set to `true`.
-2. Set unique iOS bundle and Android package IDs in `app.json` before creating store entries, and create the corresponding apps in App Store Connect and Google Play Console.
-3. Run `npx eas-cli@latest init` to link the Expo app and commit the generated `extra.eas.projectId` in `app.json`.
-4. Run `npx eas-cli@latest credentials --platform ios` and `npx eas-cli@latest credentials --platform android` to configure signing; set up the App Store Connect API key and Google Play service account for EAS Submit.
-5. Set `submit.production.ios.ascAppId` in `eas.json` to the numeric App Store Connect app ID, and add `EXPO_TOKEN` to GitHub Actions secrets.
-6. Make one successful local EAS production build for each platform to verify the Expo project, credentials, and store IDs, then set the GitHub Actions variable `MOBILE_RELEASE_READY=true` to enable release jobs on later `master` pushes or manual dispatch.
+1. The App Store Connect record `Modex AI Workspace` (Apple ID `6824009518`) is registered for `com.prototypebyai.modex` under Apple team `6668YNMX76`. This is a TestFlight upload, not a public App Store release.
+2. GitHub Actions repository secrets:
+   - `IOS_SIGNING_CERTIFICATE_BASE64`: base64 encoded Apple Distribution `.p12` with its private key.
+   - `IOS_SIGNING_CERTIFICATE_PASSWORD`: password for that `.p12`.
+   - `IOS_PROVISIONING_PROFILE_BASE64`: base64 encoded App Store provisioning profile for the bundle ID.
+   - `ASC_API_KEY_JSON_BASE64`: base64 encoded JSON with `key_id`, `issuer_id`, and `key` containing the downloaded `.p8` private key text.
+   All four secrets are configured for this repository.
+3. Dispatch **Release Modex Mobile** from the intended branch with `ios_testflight=true`. The job installs CocoaPods, archives with Xcode, exports an IPA, and uploads it using Apple's altool. GitHub-hosted macOS runners consume the private repository's GitHub Actions minutes.
+4. Check App Store Connect after Apple's processing finishes, then add internal testers in TestFlight.
 
-The release workflow uses EAS cloud builds, so GitHub runners do not need Apple signing files or Android keystores. EAS keeps signing and submission credentials in the connected Expo account; never commit them. iOS uploads to TestFlight and Android uploads to the Play internal track. Store review and tester access remain managed in the respective store consoles.
+Keep certificates, profiles, API keys, and passwords outside the repository. Apple only permits downloading an App Store Connect API private key once. The checked-in `ios/` directory is the source of truth for the native project; when native Expo configuration changes, regenerate it intentionally and review the diff before committing.
 
-## Daily flow
+After the first TestFlight upload is verified, `MOBILE_IOS_RELEASE_READY=true` may enable uploads on future `master` pushes. Leave it unset while preparing the feature branch. Do not promote `dev` into `master` until asked.
 
-```sh
-git checkout dev
-git pull --ff-only origin dev
-git checkout -b feat/my-change
-npm ci --include=dev
-npm run typecheck
-npm test
-```
+## Android
 
-Open `feat/my-change -> dev`, wait for JS checks and both native compile jobs, then merge. When ready to distribute, open `dev -> master`; merging triggers EAS production builds and submissions. The release workflow also supports manual dispatch.
+Android still uses Expo EAS for its release job. Before enabling `MOBILE_ANDROID_RELEASE_READY=true`, choose the final Android package ID, configure Android signing and Google Play internal-track submission in EAS, and add `EXPO_TOKEN` as a GitHub Actions secret. The release workflow builds and submits Android on `master` pushes when the variable is enabled.
 
-For local development use `npm run start`; `npm run android` needs a local Android SDK, and `npm run ios` needs macOS with Xcode, so this Linux workstation relies on the macOS CI job or EAS for iOS binaries. A physical phone must reach the same trusted Codex WebUI server that currently listens on this computer's `127.0.0.1:4545`; configure that address in the app before signing in. Do not expose this full-machine Codex server directly to the public internet. A private network route such as Tailscale is appropriate; see [CONNECT_TO_SERVER.md](CONNECT_TO_SERVER.md).
+## Local development
 
-## Reference
+Use `npm run start` for the development client. `npm run ios` requires macOS with Xcode and CocoaPods; this Linux workstation relies on the macOS CI runner for iOS compile checks. A physical phone must reach the trusted Codex WebUI server, which currently listens on this computer's `127.0.0.1:4545`. Configure a private network route such as Tailscale before signing in; see [CONNECT_TO_SERVER.md](CONNECT_TO_SERVER.md).
 
-- [Expo EAS Build from GitHub](https://docs.expo.dev/build/building-from-github/)
-- [Expo EAS Submit configuration](https://docs.expo.dev/submit/eas-json/)
-- [Expo Android submission](https://docs.expo.dev/submit/android/)
+In TestFlight builds, a fatal JavaScript error shows a **Modex error** alert with the original message. Use **Copy details** or **Share details** to send the JavaScript stack. Modex also keeps the 10 most recent fatal JavaScript errors, React render errors, and unhandled promise rejections on the device. Open **Diagnostics** on the sign-in screen or in the Threads drawer to review, copy, share, or clear them after a restart. Reports are shared only when the user chooses to share them; review their text for private information first. Apple's TestFlight `.crash` download may otherwise show only `RCTFatal` without the JavaScript exception. Native iOS crashes can end the process before JavaScript saves a report; retrieve those from TestFlight.
+
+## References
+
+- [GitHub: signing Xcode apps on macOS runners](https://docs.github.com/en/actions/how-tos/deploy/deploy-to-third-party-platforms/sign-xcode-applications)
+- [Apple: upload builds to App Store Connect](https://developer.apple.com/help/app-store-connect/manage-builds/upload-builds/)
+- [Apple: upload builds with altool](https://developer.apple.com/help/app-store-connect/manage-builds/upload-builds/)

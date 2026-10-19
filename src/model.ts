@@ -43,8 +43,19 @@ export function activityTitle(item:ThreadItem):string {
   return names[item.type]||item.type.replace(/([a-z])([A-Z])/g,'$1 $2');
 }
 export function activityDetail(item:ThreadItem):string {
-  for(const key of ['command','query','name','title','summary','text','output','patch']) if(typeof item[key]==='string') return String(item[key]).slice(-12000);
-  return JSON.stringify(item,null,2).slice(-12000);
+  for(const key of ['command','query','name','title','summary','text','output','patch']) {
+    const detail=extractText(item[key]);
+    if(detail) return detail.slice(-12000);
+  }
+  const changes=Array.isArray(item.changes)?item.changes:[];
+  if(changes.length) return changes.map(change=>{
+    if(!change||typeof change!=='object') return '';
+    const data=change as Record<string,unknown>;
+    const path=String(data.path||data.filePath||data.file||'file');
+    const action=String(data.type||data.kind||'updated');
+    return `${action}: ${path}`;
+  }).filter(Boolean).join('\n').slice(-12000);
+  return '';
 }
 export function isWorking(thread:Thread|undefined,activeIds:Set<string>):boolean { return !!thread && (activeIds.has(thread.id) || thread.status?.type==='active' || thread.turns?.at(-1)?.status==='inProgress') }
 export function eventThreadId(event:CodexEvent):string|undefined {
@@ -52,6 +63,59 @@ export function eventThreadId(event:CodexEvent):string|undefined {
 }
 export function isDecisionRequest(method:string):boolean { return /requestApproval|applyPatchApproval|execCommandApproval/.test(method) }
 export function permissionLabel(mode:PermissionMode):string {return mode==='yolo'?'YOLO':mode[0].toUpperCase()+mode.slice(1)}
+type UsageWindow={key:'primary'|'secondary';label:string;usedPercent:number;remainingPercent:number;resetsAt?:number};
+export type UsageDetails={plan?:string;windows:UsageWindow[]};
+function record(value:unknown):Record<string,unknown>|undefined {return value!==null&&typeof value==='object'&&!Array.isArray(value)?value as Record<string,unknown>:undefined}
+function finiteNumber(value:unknown):number|undefined {
+ const number=typeof value==='number'?value:typeof value==='string'&&value.trim()?Number(value):NaN;
+ return Number.isFinite(number)?number:undefined;
+}
+function timestamp(value:unknown):number|undefined {
+ const number=finiteNumber(value);
+ const date=number!==undefined?(number<1e11?number*1000:number):typeof value==='string'?Date.parse(value):NaN;
+ return Number.isFinite(date)?date:undefined;
+}
+function usageWindowLabel(minutes:number|undefined,key:'primary'|'secondary'):string {
+ if(minutes===10080) return 'Weekly limit';
+ if(minutes===1440) return 'Daily limit';
+ if(minutes&&minutes%1440===0) return `${minutes/1440}-day limit`;
+ if(minutes&&minutes%60===0) return `${minutes/60}-hour limit`;
+ if(minutes) return `${minutes}-minute limit`;
+ return key==='primary'?'Primary limit':'Secondary limit';
+}
+export function usageDetails(value:unknown):UsageDetails {
+ const data=record(value)||{};
+ const limits=record(data.rateLimits)||record(data.rate_limits)||data;
+ const windows=(['primary','secondary'] as const).flatMap(key=>{
+  const item=record(limits[key]);
+  const used=finiteNumber(item?.usedPercent??item?.used_percent);
+  if(used===undefined) return [];
+  const usedPercent=Math.max(0,Math.min(100,used));
+  const minutes=finiteNumber(item?.windowDurationMins??item?.window_duration_mins);
+  return [{key,label:usageWindowLabel(minutes,key),usedPercent,remainingPercent:100-usedPercent,resetsAt:timestamp(item?.resetsAt??item?.resets_at)}];
+ });
+ const rawPlan=limits.planType??limits.plan_type??data.planType??data.plan_type;
+ const plan=typeof rawPlan==='string'&&rawPlan.trim()?rawPlan.trim().replace(/(^|[-_\s])\w/g,part=>part.toUpperCase().replace(/[-_]/,' ')):undefined;
+ return {plan,windows};
+}
+export function chatTokenCount(...values:unknown[]):number|undefined {
+ for(const value of values) {
+  const data=record(value);
+  if(!data) continue;
+  for(const key of ['totalTokens','total_tokens']) {
+   const count=finiteNumber(data[key]);
+   if(count!==undefined&&count>=0) return count;
+  }
+  for(const key of ['totalTokenUsage','total_token_usage','total','tokenUsage','token_usage','usage']) {
+   const count=chatTokenCount(data[key]);
+   if(count!==undefined) return count;
+  }
+  const input=finiteNumber(data.inputTokens??data.input_tokens);
+  const output=finiteNumber(data.outputTokens??data.output_tokens);
+  if(input!==undefined||output!==undefined) return Math.max(0,(input||0)+(output||0));
+ }
+ return undefined;
+}
 export function rateReset(value:unknown):number|undefined {
  const o=value as {rateLimits?:{primary?:{resetsAt?:number|string};secondary?:{resetsAt?:number|string}}};
  const vals=[o?.rateLimits?.primary?.resetsAt,o?.rateLimits?.secondary?.resetsAt].map(x=>typeof x==='string'?Date.parse(x):typeof x==='number'?(x<1e11?x*1000:x):NaN).filter(x=>Number.isFinite(x)&&x>Date.now());
