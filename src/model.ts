@@ -152,6 +152,10 @@ export function usageDetails(value:unknown):UsageDetails {
  const plan=typeof rawPlan==='string'&&rawPlan.trim()?rawPlan.trim().replace(/(^|[-_\s])\w/g,part=>part.toUpperCase().replace(/[-_]/,' ')):undefined;
  return {plan,windows};
 }
+export function usageWarmupKey(value:unknown,now=Date.now()):string|undefined {
+ const primary=usageDetails(value).windows.find(window=>window.key==='primary');
+ return primary?.usedPercent===0&&primary.resetsAt&&primary.resetsAt>now?`primary:${primary.resetsAt}`:undefined;
+}
 export function chatTokenCount(...values:unknown[]):number|undefined {
  for(const value of values) {
   const data=record(value);
@@ -176,6 +180,7 @@ export function rateReset(value:unknown):number|undefined {
  return vals.length?Math.min(...vals):undefined;
 }
 export function isRateLimitError(value:unknown):boolean { return /rate.?limit|usage.?limit|quota|too many requests|429/i.test(typeof value==='string'?value:JSON.stringify(value||'')) }
+export function isAlreadyStoppedError(value:unknown):boolean { return /already (?:stopped|interrupted|completed)|not active|no active turn|turn.*(?:finished|not found)|cannot interrupt/i.test(value instanceof Error?value.message:typeof value==='string'?value:JSON.stringify(value||'')) }
 export function planOf(thread?:Thread|null):PlanStep[] {
  const items=thread?.turns?.at(-1)?.items||[];
  const item=[...items].reverse().find(i=>i.type==='plan');
