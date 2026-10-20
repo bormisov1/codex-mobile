@@ -106,7 +106,7 @@ export function activityDetail(item:ThreadItem):string {
   }).filter(Boolean).join('\n').slice(-12000);
   return '';
 }
-export function isWorking(thread:Thread|undefined,activeIds:Set<string>):boolean { return !!thread && (activeIds.has(thread.id) || thread.status?.type==='active') }
+export function isWorking(thread:Thread|undefined,activeIds:Set<string>):boolean { return !!thread&&activeIds.has(thread.id) }
 export function interruptTurnId(thread:Thread|undefined,active?:{turnId:string|null}):string|undefined {
  if(active?.turnId) return active.turnId;
  const last=thread?.turns?.at(-1);
