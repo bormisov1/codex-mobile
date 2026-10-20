@@ -25,6 +25,7 @@ jobs:
     timeout-minutes: 180
     env:
       CI: '1'
+      TELEGRAM_CONFIGURED: ${{ secrets.TELEGRAM_BOT_TOKEN != '' && secrets.TELEGRAM_CHAT_ID != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -131,14 +132,11 @@ jobs:
             --apiIssuer "$ASC_ISSUER_ID"
 
       - name: Notify Telegram after successful upload
+        if: ${{ env.TELEGRAM_CONFIGURED == 'true' }}
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
-            echo "::notice::Telegram notification secrets are not configured"
-            exit 0
-          fi
           run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
           curl --fail-with-body --silent --show-error \
             --request POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
