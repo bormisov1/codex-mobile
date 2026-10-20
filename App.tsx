@@ -6,7 +6,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import * as Clipboard from 'expo-clipboard';
-import { Accelerometer } from 'expo-sensors';
 import Svg, { Defs, Path, RadialGradient, Stop } from 'react-native-svg';
 import { FileSystem, Sharing, Notifications, ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from './src/platform';
 import { Ionicons } from '@expo/vector-icons';
@@ -42,7 +41,7 @@ function Action({label,onPress,colors,kind='plain',disabled=false,icon}: {label:
 }
 function IconButton({name,onPress,colors,size:iconSize=22}: {name:keyof typeof Ionicons.glyphMap;onPress:()=>void;colors:Colors;size?:number}){return <Pressable accessibilityRole="button" onPress={onPress} style={styles.iconButton}><Ionicons name={name} size={iconSize} color={colors.text}/></Pressable>}
 const ledStyles=StyleSheet.create({
- reflections:{position:'absolute',width:16,height:16,top:0,left:0},
+ blackout:{position:'absolute',top:0,right:0,bottom:0,left:0,backgroundColor:'#000'},
  large:{position:'absolute',width:16,height:16,top:0,left:0},
  small:{position:'absolute',width:14,height:14,top:1,left:1},
  smallOuter:{position:'absolute',width:14,height:14,borderRadius:7,borderRightWidth:1.1,borderBottomWidth:1.1,borderRightColor:'rgba(255,255,255,.58)',borderBottomColor:'rgba(255,255,255,.58)'},
@@ -51,15 +50,21 @@ const ledStyles=StyleSheet.create({
 });
 function StatusLed({color,label,onPress}:{color:string;label:string;onPress:()=>void}){
  const large=useRef(new Animated.Value(.72)).current,small=useRef(new Animated.Value(.38)).current;
- const reflectionAngle=useRef(new Animated.Value(0)).current;
+ const blackout=useRef(new Animated.Value(0)).current;
  useEffect(()=>{const a=Animated.loop(Animated.sequence([Animated.timing(large,{toValue:1,duration:1700,easing:Easing.inOut(Easing.quad),useNativeDriver:true}),Animated.timing(large,{toValue:.72,duration:2300,easing:Easing.inOut(Easing.quad),useNativeDriver:true})]));const b=Animated.loop(Animated.sequence([Animated.timing(small,{toValue:.7,duration:2600,easing:Easing.inOut(Easing.quad),useNativeDriver:true}),Animated.timing(small,{toValue:.38,duration:3100,easing:Easing.inOut(Easing.quad),useNativeDriver:true})]));a.start();b.start();return()=>{a.stop();b.stop()}},[large,small]);
- useEffect(()=>{if(Platform.OS==='web')return;let disposed=false,foreground=AppState.currentState==='active',starting=false,subscription:{remove:()=>void}|undefined;let filteredX=0,filteredY=0,lastRaw=0,unwrapped=0;
-  const stop=()=>{subscription?.remove();subscription=undefined};
-  const start=async()=>{if(disposed||!foreground||subscription||starting)return;starting=true;try{if(!await Accelerometer.isAvailableAsync()||disposed||!foreground)return;Accelerometer.setUpdateInterval(100);subscription=Accelerometer.addListener(({x,y})=>{filteredX=filteredX*.78+x*.22;filteredY=filteredY*.78+y*.22;if(Math.hypot(filteredX,filteredY)<.08)return;const raw=Math.atan2(-filteredY,filteredX)*180/Math.PI+135;let delta=raw-lastRaw;while(delta>180)delta-=360;while(delta<-180)delta+=360;unwrapped+=delta;lastRaw=raw;reflectionAngle.setValue(unwrapped)})}finally{starting=false}};
-  start();const appState=AppState.addEventListener('change',state=>{foreground=state==='active';if(foreground)start();else stop()});return()=>{disposed=true;appState.remove();stop()}
- },[reflectionAngle]);
- const rotation=reflectionAngle.interpolate({inputRange:[-1080,1080],outputRange:['-1080deg','1080deg'],extrapolate:'extend'});
- return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={styles.statusHit}><View style={[styles.statusGlow,{backgroundColor:color,boxShadow:`0 0 3px 1px ${color}`,opacity:.32}]}/><View style={[styles.statusDot,{backgroundColor:color,width:16,height:16,borderRadius:8}]}><Animated.View pointerEvents="none" style={[ledStyles.reflections,{transform:[{rotate:rotation}]}]}><Animated.View style={[ledStyles.large,{opacity:large}]}><Svg width={16} height={16} viewBox="0 0 16 16"><Defs><RadialGradient id="brightLedReflection" cx="50%" cy="50%" r="50%"><Stop offset="52%" stopColor="#fff" stopOpacity=".42"/><Stop offset="78%" stopColor="#fff" stopOpacity=".9"/><Stop offset="100%" stopColor="#fff" stopOpacity="1"/></RadialGradient></Defs><Path d="M 1.75 7.2 A 6.3 6.3 0 0 1 7.2 1.75 A 4.45 4.45 0 0 0 1.75 7.2 Z" fill="url(#brightLedReflection)"/></Svg></Animated.View><Animated.View style={[ledStyles.small,{opacity:small}]}><View style={ledStyles.smallOuter}/><View style={ledStyles.smallMiddle}/><View style={ledStyles.smallInner}/></Animated.View></Animated.View></View></Pressable>
+ useEffect(()=>{
+  const pulse=(toValue:number,duration:number,delay=0)=>Animated.timing(blackout,{toValue,duration,delay,easing:Easing.linear,useNativeDriver:true});
+  const flicker=Animated.loop(Animated.sequence([
+   pulse(0,1,29500),
+   pulse(1,25),pulse(0,35,65),
+   pulse(1,20,100),pulse(0,30,70),
+   pulse(1,30,80),pulse(0,50,110),
+  ]));
+  flicker.start();
+  return()=>flicker.stop();
+ },[blackout]);
+ const glowOpacity=blackout.interpolate({inputRange:[0,1],outputRange:[.32,0]});
+ return <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={styles.statusHit}><Animated.View style={[styles.statusGlow,{backgroundColor:color,boxShadow:`0 0 3px 1px ${color}`,opacity:glowOpacity}]}/><View style={[styles.statusDot,{backgroundColor:color,width:16,height:16,borderRadius:8}]}><Animated.View pointerEvents="none" style={[ledStyles.blackout,{opacity:blackout}]}/><Animated.View pointerEvents="none" style={[ledStyles.large,{opacity:large}]}><Svg width={16} height={16} viewBox="0 0 16 16"><Defs><RadialGradient id="brightLedReflection" cx="50%" cy="50%" r="50%"><Stop offset="52%" stopColor="#fff" stopOpacity=".42"/><Stop offset="78%" stopColor="#fff" stopOpacity=".9"/><Stop offset="100%" stopColor="#fff" stopOpacity="1"/></RadialGradient></Defs><Path d="M 1.75 7.2 A 6.3 6.3 0 0 1 7.2 1.75 A 4.45 4.45 0 0 0 1.75 7.2 Z" fill="url(#brightLedReflection)"/></Svg></Animated.View><Animated.View pointerEvents="none" style={[ledStyles.small,{opacity:small}]}><View style={ledStyles.smallOuter}/><View style={ledStyles.smallMiddle}/><View style={ledStyles.smallInner}/></Animated.View></View></Pressable>
 }
 function Choice({label,selected,onPress,colors,detail}: {label:string;selected?:boolean;onPress:()=>void;colors:Colors;detail?:string}){return <Pressable onPress={onPress} style={[styles.choice,{borderColor:selected?colors.accent:colors.border,backgroundColor:selected?colors.accentWash:colors.surface}]}><View style={{flex:1}}><Text style={{color:colors.text,fontSize:15,fontWeight:selected?'700':'500'}}>{label}</Text>{detail&&<Text style={{color:colors.muted,fontSize:12,marginTop:3}}>{detail}</Text>}</View>{selected&&<Ionicons name="checkmark" size={18} color={colors.accent}/>}</Pressable>}
 function MessageHeader({role,text,limited,colors,onCancel,onEdit,onCopied}:{role:'user'|'assistant';text:string;limited:boolean;colors:Colors;onCancel:()=>void;onEdit:()=>void;onCopied:()=>void}){return <View style={{flexDirection:'row',alignItems:'center',gap:8,marginBottom:4}}>{limited&&<><Pressable accessibilityRole="button" accessibilityLabel="Cancel pending message" onPress={onCancel}><Ionicons name="close-circle-outline" size={16} color={colors.danger}/></Pressable><Pressable accessibilityRole="button" accessibilityLabel="Edit pending message" onPress={onEdit}><Ionicons name="pencil-outline" size={15} color={colors.muted}/></Pressable></>}<Text style={[styles.messageRole,{color:colors.muted,marginBottom:0}]}>{role==='user'?'YOU':'CODEX'}</Text><Pressable accessibilityRole="button" accessibilityLabel="Copy message" onPress={()=>Clipboard.setStringAsync(text).then(onCopied)}><Ionicons name="copy-outline" size={14} color={colors.muted}/></Pressable></View>}
