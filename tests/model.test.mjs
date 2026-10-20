@@ -17,7 +17,8 @@ test('working state and interrupt target ignore stale completed turns',()=>{
  assert.equal(isWorking(completed,new Set()),false);
  assert.equal(interruptTurnId(completed),undefined);
  const running={...completed,status:{type:'active'},turns:[{id:'current',status:'inProgress',items:[]}]};
- assert.equal(isWorking(running,new Set()),true);
+ assert.equal(isWorking(running,new Set()),false);
+ assert.equal(isWorking(running,new Set(['t'])),true);
  assert.equal(interruptTurnId(running),'current');
  assert.equal(interruptTurnId(completed,{turnId:'server-turn'}),'server-turn');
 });
