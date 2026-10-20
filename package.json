@@ -42,6 +42,7 @@
     "react-native-markdown-display": "^7.0.2",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-sse": "^1.2.1",
+    "react-native-svg": "15.15.4",
     "react-native-web": "^0.21.2"
   },
   "devDependencies": {
