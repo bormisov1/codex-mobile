@@ -42,11 +42,11 @@
 
       <button class="design-card" data-screen="threads" aria-label="Open thread list design">
         <span class="preview preview-threads">
-          <span class="thread"><i>●</i><span><b>Fix status indicator</b><small>working now</small></span></span>
+          <span class="thread active"><i>●</i><span><b>Fix status indicator</b><small>working now</small></span><svg class="active-wires" viewBox="0 0 320 30" preserveAspectRatio="none" aria-hidden="true"><g class="wire-base"><path pathLength="100" d="M0 18L35 10 72 20 110 8 150 17 190 5 230 16 270 7 320 15"/><path pathLength="100" d="M0 23C35 7 60 25 95 12S150 20 185 9 240 21 320 10"/><path pathLength="100" d="M0 8L45 18 88 6 130 21 170 10 210 24 255 9 320 18"/><path pathLength="100" d="M0 15C40 28 75 2 115 15S190 28 235 13 285 4 320 16"/><path pathLength="100" d="M0 26L40 14 85 25 125 11 165 23 205 8 250 20 290 6 320 12"/><path pathLength="100" d="M0 5C32 20 67 4 104 18S170 3 208 17 275 25 320 6"/><path pathLength="100" d="M0 20L30 25 68 13 100 24 142 7 185 20 225 11 268 23 320 9"/></g><g class="wire-shine"><path pathLength="100" d="M0 18L35 10 72 20 110 8 150 17 190 5 230 16 270 7 320 15"/><path pathLength="100" d="M0 23C35 7 60 25 95 12S150 20 185 9 240 21 320 10"/><path pathLength="100" d="M0 8L45 18 88 6 130 21 170 10 210 24 255 9 320 18"/><path pathLength="100" d="M0 15C40 28 75 2 115 15S190 28 235 13 285 4 320 16"/><path pathLength="100" d="M0 26L40 14 85 25 125 11 165 23 205 8 250 20 290 6 320 12"/><path pathLength="100" d="M0 5C32 20 67 4 104 18S170 3 208 17 275 25 320 6"/><path pathLength="100" d="M0 20L30 25 68 13 100 24 142 7 185 20 225 11 268 23 320 9"/></g></svg></span>
           <span class="thread"><i>○</i><span><b>Release checklist</b><small>12 min ago</small></span></span>
           <span class="thread"><i>○</i><span><b>API review</b><small>yesterday</small></span></span>
         </span>
-        <span class="card-copy"><strong>Thread browser</strong><small>Search, pin, and activity states</small></span>
+        <span class="card-copy"><strong>Active-session wireflow</strong><small>Seven intertwined traces carry accent light</small></span>
       </button>
     </section>
   </main>
@@ -72,7 +72,7 @@
         <button id="showToast">Show notification</button>
         <button id="toggleStatus">Toggle red / green LED</button>
       </div>
-      <p class="spec-note">LED: darker core · 2–3px diffuse halo · two stationary CSS crescent reflections inside the circle.</p>
+      <p class="spec-note">LED: larger diffuse halo · stationary crescent reflections · irregular one-second high-voltage brightness/radius surge every 60–120 seconds.</p>
     </div>
   </template>
 
@@ -87,7 +87,14 @@
   </template>
 
   <template id="threads">
-    <div class="thread-screen"><label>Search threads…</label><button class="new-thread">＋ New thread</button><div class="thread-row active"><i>●</i><span><b>Fix status indicator</b><small>codex-mobile · working</small></span><em>›</em></div><div class="thread-row"><i>☆</i><span><b>Release checklist</b><small>codex-mobile · 12 min ago</small></span><em>›</em></div><div class="thread-row"><i>☆</i><span><b>API review</b><small>server · yesterday</small></span><em>›</em></div></div>
+    <div class="thread-screen">
+      <label>Search threads…</label><button class="new-thread">＋ New thread</button>
+      <div class="accent-picker" aria-label="Preview selected color scheme"><span>Accent</span><button class="selected" data-accent="#25c17e" aria-label="Green"></button><button data-accent="#529dff" aria-label="Blue"></button><button data-accent="#a98aff" aria-label="Purple"></button><button data-accent="#dfae49" aria-label="Gold"></button></div>
+      <div class="thread-row active"><i>●</i><span><b>Fix status indicator</b><small>codex-mobile · working</small></span><em>›</em><svg class="active-wires" viewBox="0 0 320 30" preserveAspectRatio="none" aria-hidden="true"><g class="wire-base"><path pathLength="100" d="M0 18L35 10 72 20 110 8 150 17 190 5 230 16 270 7 320 15"/><path pathLength="100" d="M0 23C35 7 60 25 95 12S150 20 185 9 240 21 320 10"/><path pathLength="100" d="M0 8L45 18 88 6 130 21 170 10 210 24 255 9 320 18"/><path pathLength="100" d="M0 15C40 28 75 2 115 15S190 28 235 13 285 4 320 16"/><path pathLength="100" d="M0 26L40 14 85 25 125 11 165 23 205 8 250 20 290 6 320 12"/><path pathLength="100" d="M0 5C32 20 67 4 104 18S170 3 208 17 275 25 320 6"/><path pathLength="100" d="M0 20L30 25 68 13 100 24 142 7 185 20 225 11 268 23 320 9"/></g><g class="wire-shine"><path pathLength="100" d="M0 18L35 10 72 20 110 8 150 17 190 5 230 16 270 7 320 15"/><path pathLength="100" d="M0 23C35 7 60 25 95 12S150 20 185 9 240 21 320 10"/><path pathLength="100" d="M0 8L45 18 88 6 130 21 170 10 210 24 255 9 320 18"/><path pathLength="100" d="M0 15C40 28 75 2 115 15S190 28 235 13 285 4 320 16"/><path pathLength="100" d="M0 26L40 14 85 25 125 11 165 23 205 8 250 20 290 6 320 12"/><path pathLength="100" d="M0 5C32 20 67 4 104 18S170 3 208 17 275 25 320 6"/><path pathLength="100" d="M0 20L30 25 68 13 100 24 142 7 185 20 225 11 268 23 320 9"/></g></svg></div>
+      <div class="thread-row"><i>☆</i><span><b>Release checklist</b><small>codex-mobile · 12 min ago</small></span><em>›</em></div>
+      <div class="thread-row"><i>☆</i><span><b>API review</b><small>server · yesterday</small></span><em>›</em></div>
+      <p class="spec-note">Active concept: seven intertwined circuit traces use the selected accent. Bright packets travel left-to-right, then spark back.</p>
+    </div>
   </template>
 
   <script src="app.js"></script>
