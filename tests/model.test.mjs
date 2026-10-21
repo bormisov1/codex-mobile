@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {activityDetail, activityEvent, activityOf, chatTokenCount, countdownLabel, originOf, eventThreadId, interruptTurnId, isAlreadyStoppedError, isWorking, messagesOf, isDecisionRequest, isRateLimitError, isLocalResource, planOf, rateReset, reconcileActivity, pathForThread, usageDetails, usageWarmupKey} from '../src/model.ts';
+import {activityDetail, activityEvent, activityOf, chatTokenCount, countdownLabel, originOf, eventThreadId, interruptTurnId, isAlreadyStoppedError, isWorking, messagesOf, isDecisionRequest, isRateLimitError, isLocalResource, planOf, rateReset, reconcileActivity, selectedThreadStatus, pathForThread, usageDetails, usageWarmupKey} from '../src/model.ts';
 
 test('server origin accepts a pathless HTTP or HTTPS origin only',()=>{
  assert.equal(originOf('https://codex.example.com/'),'https://codex.example.com');
@@ -21,6 +21,13 @@ test('working state and interrupt target ignore stale completed turns',()=>{
  assert.equal(isWorking(running,new Set(['t'])),true);
  assert.equal(interruptTurnId(running),'current');
  assert.equal(interruptTurnId(completed,{turnId:'server-turn'}),'server-turn');
+});
+test('selected thread status ignores background work and pending sends',()=>{
+ const active=[{threadId:'background',turnId:'turn-1'},{threadId:'selected',turnId:'turn-2'}];
+ assert.deepEqual(selectedThreadStatus('selected','background',active),{working:true,pending:false});
+ assert.deepEqual(selectedThreadStatus('idle','background',active),{working:false,pending:false});
+ assert.deepEqual(selectedThreadStatus('idle','idle',active),{working:false,pending:true});
+ assert.deepEqual(selectedThreadStatus('','new',active),{working:false,pending:true});
 });
 test('durable item history retains user, assistant, and commentary',()=>{
  const thread={id:'t',cwd:'/workspace',turns:[{id:'turn',status:'completed',items:[{type:'userMessage',content:[{type:'text',text:'Hello'}]},{type:'agentMessage',text:'World'},{type:'agentMessage',phase:'commentary',text:'Checking files'}]}]};

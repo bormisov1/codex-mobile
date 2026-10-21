@@ -1,4 +1,4 @@
-import type { Thread, ThreadItem, Turn, ActivityEntry, CodexEvent, PermissionMode, PlanStep } from './types';
+import type { Thread, ThreadItem, Turn, ActivityEntry, ActiveThread, CodexEvent, PermissionMode, PlanStep } from './types';
 export function originOf(input:string):string {
   const url = new URL(input.trim());
   if (!['http:','https:'].includes(url.protocol) || url.username || url.password || url.pathname !== '/' || url.search || url.hash) throw new Error('Enter a server origin such as https://codex.example.com (no path).');
@@ -107,6 +107,10 @@ export function activityDetail(item:ThreadItem):string {
   return '';
 }
 export function isWorking(thread:Thread|undefined,activeIds:Set<string>):boolean { return !!thread&&activeIds.has(thread.id) }
+export function selectedThreadStatus(threadId:string,pendingThreadId:string,activeThreads:ActiveThread[]):{working:boolean;pending:boolean} {
+ const selectedId=threadId||'new';
+ return {working:!!threadId&&activeThreads.some(item=>item.threadId===threadId),pending:!!pendingThreadId&&pendingThreadId===selectedId};
+}
 export function interruptTurnId(thread:Thread|undefined,active?:{turnId:string|null}):string|undefined {
  if(active?.turnId) return active.turnId;
  const last=thread?.turns?.at(-1);
