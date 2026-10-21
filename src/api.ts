@@ -72,6 +72,8 @@ export class CodexApi {
   thread(id:string){return this.request<{thread:Thread}>(pathForThread(id))}
   createThread(cwd:string,permissionMode:string){return this.request<{thread:Thread}>('/api/threads','POST',{cwd,permissionMode})}
   send(id:string,data:{text:string;cwd:string;effort:string;systemPrompt:string;amtToolsEnabled:boolean;permissionMode:string;attachments:Attachment[]}){return this.request<{turn:{id:string}}>(`${pathForThread(id)}/messages`,'POST',data)}
+  scheduleAutoResume(id:string,data:{retryAt:number;message:{text:string;cwd:string;effort:string;systemPrompt:string;amtToolsEnabled:boolean;permissionMode:string;attachments:Attachment[]}}){return this.request<{ok:true;scheduled:true;retryAt:number}>(`${pathForThread(id)}/auto-resume`,'PUT',data)}
+  cancelAutoResume(id:string){return this.request<{ok:true;cancelled:boolean}>(`${pathForThread(id)}/auto-resume`,'DELETE',{})}
   command(id:string,action:string,body:unknown={}){return this.request<{thread?:Thread}>(`${pathForThread(id)}/commands/${action}`,'POST',body)}
   archive(ids:string[]){return this.request<{archived:string[];failed:{id:string;message:string}[]}>('/api/threads/archive','POST',{threadIds:ids})}
   interrupt(threadId:string,turnId:string){return this.request(`${pathForThread(threadId)}/turns/${encodeURIComponent(turnId)}/interrupt`,'POST',{})}
@@ -86,7 +88,7 @@ export class CodexApi {
   amtDisconnect(){return this.request('/api/amt/connect','DELETE',{})}
   async events(onFrame:(frame:StreamFrame)=>void,onState:(state:'connected'|'reconnecting'|'failed')=>void):Promise<()=>void>{
     const cookie=await this.cookie();
-    const source=new EventSource< 'message' >(this.origin+'/api/events',{headers:this.mediaHeaders(cookie),withCredentials:false,pollingInterval:3000,timeout:30000});
+    const source=new EventSource<'message'>(this.origin+'/api/events',{headers:this.mediaHeaders(cookie),withCredentials:false,pollingInterval:3000});
     source.addEventListener('open',()=>onState('connected'));
     source.addEventListener('error',()=>onState('reconnecting'));
     source.addEventListener('message',e=>{try{if(e.data)onFrame(JSON.parse(e.data) as StreamFrame)}catch{}});

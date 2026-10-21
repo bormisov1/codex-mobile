@@ -36,6 +36,7 @@ All routes below require the session cookie except `POST /api/login`. A route's 
 | `POST /api/threads` | `{cwd?,permissionMode?,model?,personality?}` → `201` Codex `thread/start` response | Existing absolute `cwd` must resolve under `WORKSPACE_ROOT`; default root. `model`/`personality` pass through or null. |
 | `GET /api/threads/:threadId` | → Codex `thread/read` response with turns | `includeTurns:true`; retries certain empty-history errors up to five attempts. |
 | `POST /api/threads/:threadId/messages` | `{text:string,cwd?,effort?,systemPrompt?,amtToolsEnabled?,permissionMode?,attachments?}` → `202` Codex `turn/start` response | See turn input rules below. |
+| `GET/PUT/DELETE /api/threads/:threadId/auto-resume` | Status / `{retryAt,message}` / cancel | Persists a server-owned rate-limit retry so it can run without the phone. |
 | `POST /api/threads/archive` | `{threadIds:string[]}` → `{archived:string[],failed:[{id,message}]}` | 1–500 nonempty IDs, each ≤128 chars; deduplicated, four concurrent `thread/archive` RPCs. Partial failure still HTTP 200. |
 | `POST /api/threads/:threadId/commands/:action` | Optional JSON body → RPC result or `{ok:true}` | Actions: `compact`, `review`, `rename`, `fork`, `archive`, `unarchive`. See below. |
 | `POST /api/threads/:threadId/turns/:turnId/interrupt` | Empty JSON → Codex `turn/interrupt` response | Requires actual active turn ID. |
