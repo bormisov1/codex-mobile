@@ -18,7 +18,7 @@
     <section class="design-grid" aria-label="Component designs">
       <button class="design-card" data-screen="signals" aria-label="Open status and notifications design">
         <span class="preview preview-signals">
-          <span class="mini-top"><span>Build session</span><span class="led led-green"></span><b>•••</b></span>
+          <span class="mini-top"><span>Build session</span><b>✎</b><span class="led led-green"></span></span>
           <span class="mini-toast"><i>!</i><span><b>Connection interrupted</b><small>Swipe to dismiss</small></span></span>
           <span class="mini-lines"><i></i><i></i><i></i></span>
         </span>
@@ -56,8 +56,8 @@
       <header class="app-top">
         <button class="back" id="back" aria-label="Back to designs">‹</button>
         <div><strong id="screenTitle">Status & notifications</strong><small>/projects/modex</small></div>
-        <button class="status-button" id="statusButton" aria-label="Toggle connection status"><span class="led led-green" id="mainLed"></span></button>
-        <button class="more" aria-label="More actions">•••</button>
+        <button class="edit-name" aria-label="Rename session">✎</button>
+        <button class="status-button" id="statusButton" aria-label="Toggle activity status"><span class="led led-green" id="mainLed"></span></button>
       </header>
       <div class="app-meta"><span id="metaText">Moderate · Ready</span><span>Usage & activity ›</span></div>
       <div class="screen" id="screen"></div>
@@ -72,7 +72,7 @@
         <button id="showToast">Show notification</button>
         <button id="toggleStatus">Toggle red / green LED</button>
       </div>
-      <p class="spec-note">LED: idle core stays deep black · original 16px stationary crescent reflections remain · only active Codex gets the larger halo and its one-second high-voltage surge every 60–120 seconds.</p>
+      <p class="spec-note">LED: idle core stays deep black · original 16px stationary crescent reflections remain · any active turn lights the core and steady halo green · the one-second high-voltage surge starts only while the current turn is reasoning, then repeats every 60–120 seconds.</p>
     </div>
   </template>
 
