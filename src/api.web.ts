@@ -26,6 +26,8 @@ export class CodexApi {
   thread(id:string){return this.request<{thread:Thread}>(pathForThread(id))}
   createThread(cwd:string,permissionMode:string){return this.request<{thread:Thread}>('/api/threads','POST',{cwd,permissionMode})}
   send(id:string,data:{text:string;cwd:string;effort:string;systemPrompt:string;amtToolsEnabled:boolean;permissionMode:string;attachments:Attachment[]}){return this.request<{turn:{id:string}}>(`${pathForThread(id)}/messages`,'POST',data)}
+  scheduleAutoResume(id:string,data:{retryAt:number;message:{text:string;cwd:string;effort:string;systemPrompt:string;amtToolsEnabled:boolean;permissionMode:string;attachments:Attachment[]}}){return this.request<{ok:true;scheduled:true;retryAt:number}>(`${pathForThread(id)}/auto-resume`,'PUT',data)}
+  cancelAutoResume(id:string){return this.request<{ok:true;cancelled:boolean}>(`${pathForThread(id)}/auto-resume`,'DELETE',{})}
   command(id:string,action:string,body:unknown={}){return this.request<{thread?:Thread}>(`${pathForThread(id)}/commands/${action}`,'POST',body)}
   archive(ids:string[]){return this.request<{archived:string[];failed:{id:string;message:string}[]}>('/api/threads/archive','POST',{threadIds:ids})}
   interrupt(threadId:string,turnId:string){return this.request(`${pathForThread(threadId)}/turns/${encodeURIComponent(turnId)}/interrupt`,'POST',{})}

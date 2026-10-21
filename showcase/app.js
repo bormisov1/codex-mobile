@@ -23,6 +23,13 @@ function wireSignals(){
   toggle?.addEventListener('click',toggleLed);
 }
 
+function wireThreads(){
+  screen.querySelectorAll('.accent-picker button').forEach(button=>button.addEventListener('click',()=>{
+    document.documentElement.style.setProperty('--accent',button.dataset.accent);
+    screen.querySelectorAll('.accent-picker button').forEach(choice=>choice.classList.toggle('selected',choice===button));
+  }));
+}
+
 function toggleLed(){
   const green=mainLed.classList.contains('led-green');
   mainLed.classList.toggle('led-green',!green);
@@ -40,6 +47,7 @@ function openScreen(card){
   document.body.style.overflow='hidden';
   setTimeout(()=>simulator.classList.remove('entering'),620);
   if(name==='signals')wireSignals();
+  if(name==='threads')wireThreads();
 }
 
 function closeScreen(){
