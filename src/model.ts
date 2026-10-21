@@ -107,9 +107,11 @@ export function activityDetail(item:ThreadItem):string {
   return '';
 }
 export function isWorking(thread:Thread|undefined,activeIds:Set<string>):boolean { return !!thread&&activeIds.has(thread.id) }
-export function selectedThreadStatus(threadId:string,pendingThreadId:string,activeThreads:ActiveThread[]):{working:boolean;pending:boolean} {
+export function selectedThreadStatus(threadId:string,pendingThreadId:string,activeThreads:ActiveThread[],thread?:Thread|null,reconciling=false):{working:boolean;pending:boolean} {
  const selectedId=threadId||'new';
- return {working:!!threadId&&activeThreads.some(item=>item.threadId===threadId),pending:!!pendingThreadId&&pendingThreadId===selectedId};
+ const last=thread?.id===threadId?thread.turns?.at(-1):undefined;
+ const durableWorking=last?last.status==='inProgress':thread?.id===threadId&&thread.status?.type==='active';
+ return {working:!!threadId&&(activeThreads.some(item=>item.threadId===threadId)||(reconciling&&!!durableWorking)),pending:!!pendingThreadId&&pendingThreadId===selectedId};
 }
 export function interruptTurnId(thread:Thread|undefined,active?:{turnId:string|null}):string|undefined {
  if(active?.turnId) return active.turnId;

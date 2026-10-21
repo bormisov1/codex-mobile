@@ -29,6 +29,13 @@ test('selected thread status ignores background work and pending sends',()=>{
  assert.deepEqual(selectedThreadStatus('idle','idle',active),{working:false,pending:true});
  assert.deepEqual(selectedThreadStatus('','new',active),{working:false,pending:true});
 });
+test('selected thread uses a running durable turn only while active status reconciles',()=>{
+ const running={id:'selected',cwd:'/',status:{type:'active'},turns:[{id:'turn',status:'inProgress',items:[]}]};
+ const completed={...running,status:{type:'idle'},turns:[{id:'turn',status:'completed',items:[]}]};
+ assert.equal(selectedThreadStatus('selected','',[],running,true).working,true);
+ assert.equal(selectedThreadStatus('selected','',[],running,false).working,false);
+ assert.equal(selectedThreadStatus('selected','',[{threadId:'background',turnId:'other'}],completed,true).working,false);
+});
 test('durable item history retains user, assistant, and commentary',()=>{
  const thread={id:'t',cwd:'/workspace',turns:[{id:'turn',status:'completed',items:[{type:'userMessage',content:[{type:'text',text:'Hello'}]},{type:'agentMessage',text:'World'},{type:'agentMessage',phase:'commentary',text:'Checking files'}]}]};
  assert.deepEqual(messagesOf(thread).map(m=>[m.role,m.text]),[['user','Hello'],['assistant','World'],['commentary','Checking files']]);
