@@ -70,7 +70,7 @@ export class CodexApi {
   activity(){return this.request<{activeThreads:ActiveThread[]}>('/api/activity')}
   threads(archived=false,cursor?:string){return this.request<{data:Thread[];nextCursor?:string|null}>(`/api/threads?archived=${archived}${cursor?`&cursor=${encodeURIComponent(cursor)}`:''}`)}
   thread(id:string){return this.request<{thread:Thread}>(pathForThread(id))}
-  createThread(cwd:string,permissionMode:string){return this.request<{thread:Thread}>('/api/threads','POST',{cwd,permissionMode})}
+  createThread(cwd:string,permissionMode:string,model:string){return this.request<{thread:Thread}>('/api/threads','POST',{cwd,permissionMode,model:model||undefined})}
   send(id:string,data:{text:string;cwd:string;effort:string;systemPrompt:string;amtToolsEnabled:boolean;permissionMode:string;attachments:Attachment[]}){return this.request<{turn:{id:string}}>(`${pathForThread(id)}/messages`,'POST',data)}
   scheduleAutoResume(id:string,data:{retryAt:number;message:{text:string;cwd:string;effort:string;systemPrompt:string;amtToolsEnabled:boolean;permissionMode:string;attachments:Attachment[]}}){return this.request<{ok:true;scheduled:true;retryAt:number}>(`${pathForThread(id)}/auto-resume`,'PUT',data)}
   cancelAutoResume(id:string){return this.request<{ok:true;cancelled:boolean}>(`${pathForThread(id)}/auto-resume`,'DELETE',{})}

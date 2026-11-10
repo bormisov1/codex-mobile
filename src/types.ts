@@ -1,9 +1,10 @@
 export type PermissionMode = 'restrictive' | 'moderate' | 'yolo';
 export type Effort = '' | 'low' | 'medium' | 'high' | 'xhigh';
+export type Model = '' | 'gpt-6-astra' | 'gpt-6-sol' | 'gpt-6-luna' | 'gpt-5.6-sol' | 'gpt-5.6-terra';
 export type Theme = 'dark' | 'light';
 export type Accent = 'green' | 'blue' | 'purple' | 'gold';
 export interface Preferences {
-  permissionMode: PermissionMode; effort: Effort; theme: Theme; accent: Accent;
+  permissionMode: PermissionMode; effort: Effort; model: Model; theme: Theme; accent: Accent;
   density: 'comfortable' | 'compact'; autoScroll: boolean; notify: boolean; keepUsageWindowWarm: boolean;
   amtToolsEnabled: boolean; speechLanguage: 'auto' | 'ru-RU' | 'en-US';
   systemPrompts: Record<string,string>; autoResume: Record<string, boolean>;
@@ -26,6 +27,6 @@ export interface QueuedMessage { id:string; threadId:string; text:string; attach
 export interface ActivityEntry { id:string; title:string; detail:string; kind:string; status:string; at:number }
 export interface PlanStep { step:string; status:string }
 export const DEFAULT_PREFERENCES:Preferences = {
-  permissionMode:'moderate', effort:'', theme:'dark', accent:'green', density:'comfortable',
+  permissionMode:'moderate', effort:'', model:'', theme:'dark', accent:'green', density:'comfortable',
   autoScroll:true, notify:false, keepUsageWindowWarm:false, amtToolsEnabled:false, speechLanguage:'auto', systemPrompts:{}, autoResume:{}
 };
